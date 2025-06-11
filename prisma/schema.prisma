@@ -1,0 +1,81 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Theme {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  color       String // Tailwind color class
+  icon        String // Lucide icon name
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  stories Story[]
+
+  @@map("themes")
+}
+
+model Story {
+  id          String     @id @default(cuid())
+  title       String
+  description String
+  difficulty  Difficulty
+  themeId     String
+  imageUrl    String?
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  theme  Theme        @relation(fields: [themeId], references: [id], onDelete: Cascade)
+  blocks StoryBlock[]
+
+  @@map("stories")
+}
+
+model StoryBlock {
+  id          String   @id @default(cuid())
+  storyId     String
+  order       Int
+  title       String
+  initialHint String
+  updatedHint String?
+  imageUrl    String?
+  isCompleted Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  story       Story       @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  discoveries Discovery[]
+
+  @@unique([storyId, order])
+  @@map("story_blocks")
+}
+
+model Discovery {
+  id           String   @id @default(cuid())
+  storyBlockId String
+  fact         String // The fact that needs to be discovered
+  keywords     String // Comma-separated keywords for matching
+  isDiscovered Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  storyBlock StoryBlock @relation(fields: [storyBlockId], references: [id], onDelete: Cascade)
+
+  @@map("discoveries")
+}
+
+enum Difficulty {
+  SHORT
+  MEDIUM
+  LONG
+}
