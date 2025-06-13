@@ -25,12 +25,13 @@ An interactive AI-powered story guessing game built with Next.js, TypeScript, an
 
 ## 🛠 Tech Stack
 
-- **Frontend**: Next.js 14 (App Router), TypeScript, Tailwind CSS
+- **Frontend**: Next.js 15 (App Router), React 19, TypeScript, Tailwind CSS
 - **Backend**: Next.js API Routes
-- **Database**: PostgreSQL with Prisma ORM
+- **Database**: PostgreSQL with Prisma ORM (Docker containerized)
 - **AI Integration**: Google Gemini API
 - **Icons**: Lucide React
 - **Styling**: Custom Tailwind CSS components
+- **Development**: Docker Compose for local database
 
 ## 📋 Prerequisites
 

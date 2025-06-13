@@ -25,57 +25,54 @@ model Theme {
 }
 
 model Story {
-  id          String     @id @default(cuid())
-  title       String
-  description String
-  difficulty  Difficulty
-  themeId     String
-  imageUrl    String?
-  isActive    Boolean    @default(true)
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  id         String     @id @default(cuid())
+  title      String
+  context    String // The hint/context that sets up the mystery
+  fullText   String // The complete solution text
+  hints      String[] // Array of 3 hints for the story
+  difficulty Difficulty
+  themeId    String
+  imageUrl   String?
+  isActive   Boolean    @default(true)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
 
-  theme  Theme        @relation(fields: [themeId], references: [id], onDelete: Cascade)
-  blocks StoryBlock[]
+  theme              Theme               @relation(fields: [themeId], references: [id], onDelete: Cascade)
+  phrases            StoryPhrase[] // The phrases that make up the complete story
+  playerAffirmations PlayerAffirmation[]
 
   @@map("stories")
 }
 
-model StoryBlock {
-  id          String   @id @default(cuid())
-  storyId     String
-  order       Int
-  title       String
-  initialHint String
-  updatedHint String?
-  imageUrl    String?
-  isCompleted Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+model StoryPhrase {
+  id        String   @id @default(cuid())
+  storyId   String
+  order     Int // Order of the phrase in the story (1, 2, 3, etc.)
+  text      String // The exact phrase text
+  createdAt DateTime @default(now())
 
-  story       Story       @relation(fields: [storyId], references: [id], onDelete: Cascade)
-  discoveries Discovery[]
+  story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
 
   @@unique([storyId, order])
-  @@map("story_blocks")
+  @@map("story_phrases")
 }
 
-model Discovery {
-  id           String   @id @default(cuid())
-  storyBlockId String
-  fact         String // The fact that needs to be discovered
-  keywords     String // Comma-separated keywords for matching
-  isDiscovered Boolean  @default(false)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+model PlayerAffirmation {
+  id          String   @id @default(cuid())
+  storyId     String
+  affirmation String // The affirmation/statement made by the player
+  response    String // "Yes", "No", or "Irrelevant"
+  phraseId    String? // If response is "Yes", which phrase does this relate to
+  isUsed      Boolean  @default(false) // True when the related phrase is fully discovered
+  createdAt   DateTime @default(now())
 
-  storyBlock StoryBlock @relation(fields: [storyBlockId], references: [id], onDelete: Cascade)
+  story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
 
-  @@map("discoveries")
+  @@map("player_affirmations")
 }
 
 enum Difficulty {
-  SHORT
-  MEDIUM
-  LONG
+  SHORT // 3 phrases
+  MEDIUM // 5 phrases
+  LONG // 7 phrases
 }

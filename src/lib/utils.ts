@@ -1,10 +1,8 @@
-import { clsx, type ClassValue } from 'clsx'
+import { clsx, type ClassValue } from "clsx"
+import { twMerge } from "tailwind-merge"
 
-/**
- * Merge class names with clsx
- */
 export function cn(...inputs: ClassValue[]) {
-  return clsx(inputs)
+  return twMerge(clsx(inputs))
 }
 
 /**
@@ -24,80 +22,56 @@ export function formatDifficulty(difficulty: string): string {
 }
 
 /**
- * Get theme color classes
+ * Get theme colors for UI components (dark mode optimized)
  */
-export function getThemeColors(themeColor: string) {
-  const colorMap: Record<string, { bg: string; text: string; border: string; hover: string }> = {
-    mystery: {
-      bg: 'bg-gray-900',
-      text: 'text-gray-100',
-      border: 'border-gray-700',
-      hover: 'hover:bg-gray-800'
+export function getThemeColors(color: string) {
+  const colorMap: Record<string, { bg: string; text: string; border: string; primary: string }> = {
+    purple: {
+      bg: 'bg-purple-900/20',
+      text: 'text-purple-300',
+      border: 'border-purple-700',
+      primary: 'purple'
     },
-    scifi: {
-      bg: 'bg-cyan-900',
-      text: 'text-cyan-100',
-      border: 'border-cyan-700',
-      hover: 'hover:bg-cyan-800'
+    blue: {
+      bg: 'bg-blue-900/20',
+      text: 'text-blue-300',
+      border: 'border-blue-700',
+      primary: 'blue'
     },
-    adventure: {
-      bg: 'bg-amber-900',
-      text: 'text-amber-100',
-      border: 'border-amber-700',
-      hover: 'hover:bg-amber-800'
+    green: {
+      bg: 'bg-green-900/20',
+      text: 'text-green-300',
+      border: 'border-green-700',
+      primary: 'green'
+    },
+    red: {
+      bg: 'bg-red-900/20',
+      text: 'text-red-300',
+      border: 'border-red-700',
+      primary: 'red'
+    },
+    yellow: {
+      bg: 'bg-yellow-900/20',
+      text: 'text-yellow-300',
+      border: 'border-yellow-700',
+      primary: 'yellow'
     }
   }
 
-  return colorMap[themeColor] || {
-    bg: 'bg-gray-100',
-    text: 'text-gray-900',
-    border: 'border-gray-300',
-    hover: 'hover:bg-gray-200'
-  }
+  return colorMap[color] || colorMap.purple
 }
 
 /**
- * Calculate game progress percentage
- */
-export function calculateProgress(
-  completedBlocks: string[],
-  totalBlocks: number
-): number {
-  return totalBlocks > 0 ? Math.round((completedBlocks.length / totalBlocks) * 100) : 0
-}
-
-/**
- * Format time duration
+ * Format duration for display
  */
 export function formatDuration(startTime: Date, endTime?: Date): string {
   const end = endTime || new Date()
-  const diffMs = end.getTime() - startTime.getTime()
-  const diffMins = Math.floor(diffMs / 60000)
-  const diffSecs = Math.floor((diffMs % 60000) / 1000)
-
-  if (diffMins > 0) {
-    return `${diffMins}m ${diffSecs}s`
+  const diff = end.getTime() - startTime.getTime()
+  const minutes = Math.floor(diff / 60000)
+  const seconds = Math.floor((diff % 60000) / 1000)
+  
+  if (minutes > 0) {
+    return `${minutes}m ${seconds}s`
   }
-  return `${diffSecs}s`
+  return `${seconds}s`
 }
-
-/**
- * Debounce function
- */
-export function debounce<T extends (...args: any[]) => void>(
-  func: T,
-  delay: number
-): (...args: Parameters<T>) => void {
-  let timeoutId: NodeJS.Timeout
-  return (...args: Parameters<T>) => {
-    clearTimeout(timeoutId)
-    timeoutId = setTimeout(() => func(...args), delay)
-  }
-}
-
-/**
- * Sleep utility for delays
- */
-export function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms))
-} 

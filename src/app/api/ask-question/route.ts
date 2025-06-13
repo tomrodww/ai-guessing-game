@@ -1,98 +1,98 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { evaluateQuestion } from '@/lib/gemini'
-import { QuestionResponse } from '@/types'
+import { evaluateAffirmation } from '@/lib/gemini'
+import { AffirmationResponse } from '@/types'
 
 export async function POST(request: NextRequest) {
   try {
-    const { question, storyId, blockId } = await request.json()
+    const { affirmation, storyId } = await request.json()
 
-    if (!question || !storyId || !blockId) {
+    if (!affirmation || !storyId) {
       return NextResponse.json(
         { success: false, error: 'Missing required fields' },
         { status: 400 }
       )
     }
 
-    // Get the story block with discoveries
-    const storyBlock = await prisma.storyBlock.findUnique({
-      where: { id: blockId },
+    // Get the story with phrases
+    const story = await prisma.story.findUnique({
+      where: { id: storyId },
       include: {
-        discoveries: true,
-        story: {
-          include: {
-            theme: true
-          }
+        theme: true,
+        phrases: {
+          orderBy: { order: 'asc' }
         }
       }
     })
 
-    if (!storyBlock) {
+    if (!story) {
       return NextResponse.json(
-        { success: false, error: 'Story block not found' },
+        { success: false, error: 'Story not found' },
         { status: 404 }
       )
     }
 
-    // Only consider undiscovered facts for evaluation
-    const undiscoveredFacts = storyBlock.discoveries.filter(d => !d.isDiscovered)
-
     // Build story context for AI evaluation
     const storyContext = `
-Story: ${storyBlock.story.title}
-Theme: ${storyBlock.story.theme.name}
-Current Block: ${storyBlock.title}
-Current Hint: ${storyBlock.updatedHint || storyBlock.initialHint}
-Description: ${storyBlock.story.description}
+Story: ${story.title}
+Theme: ${story.theme.name}
+Context: ${story.context}
+Phrases to discover: ${story.phrases.map(p => `${p.order}. ${p.text}`).join('\n')}
     `.trim()
 
-    // Evaluate the question using AI
-    const evaluation = await evaluateQuestion(question, storyContext, undiscoveredFacts)
+    // Evaluate the affirmation using AI
+    const evaluation = await evaluateAffirmation(affirmation, storyContext, story.phrases)
 
-    let response: QuestionResponse = {
+    let response: AffirmationResponse = {
       answer: evaluation.answer,
       explanation: evaluation.explanation
     }
 
-    // Handle discovery made
-    if (evaluation.matchedDiscovery) {
-      // Mark the discovery as found
-      await prisma.discovery.update({
-        where: { id: evaluation.matchedDiscovery.id },
-        data: { isDiscovered: true }
-      })
-
-      response.discoveryMade = {
-        fact: evaluation.matchedDiscovery.fact,
-        blockId: storyBlock.id
+    // Save the affirmation with its response
+    const savedAffirmation = await prisma.playerAffirmation.create({
+      data: {
+        storyId: story.id,
+        affirmation,
+        response: evaluation.answer,
+        phraseId: evaluation.matchedPhraseId || null
       }
+    })
 
-      // Check if all discoveries in this block are now complete
-      const remainingDiscoveries = await prisma.discovery.count({
-        where: {
-          storyBlockId: storyBlock.id,
-          isDiscovered: false
+    response.affirmationId = savedAffirmation.id
+
+    // Handle phrase discovery
+    if (evaluation.answer === 'Yes' && evaluation.matchedPhraseId) {
+      const matchedPhrase = story.phrases.find(p => p.id === evaluation.matchedPhraseId)
+      if (matchedPhrase) {
+        response.phraseDiscovered = {
+          id: matchedPhrase.id,
+          order: matchedPhrase.order,
+          text: matchedPhrase.text
         }
-      })
 
-      if (remainingDiscoveries === 0) {
-        // Mark block as completed and update hint
-        await prisma.storyBlock.update({
-          where: { id: storyBlock.id },
-          data: { isCompleted: true }
-        })
-
-        response.blockCompleted = true
-
-        // Check if all blocks in the story are completed
-        const remainingBlocks = await prisma.storyBlock.count({
+        // Mark related affirmations as used
+        await prisma.playerAffirmation.updateMany({
           where: {
-            storyId: storyBlock.storyId,
-            isCompleted: false
+            storyId: story.id,
+            phraseId: matchedPhrase.id
+          },
+          data: {
+            isUsed: true
           }
         })
 
-        if (remainingBlocks === 0) {
+        // Check if all phrases are discovered (story completed)
+        const discoveredPhrases = await prisma.playerAffirmation.findMany({
+          where: {
+            storyId: story.id,
+            response: 'Yes',
+            phraseId: { not: null }
+          },
+          select: { phraseId: true },
+          distinct: ['phraseId']
+        })
+
+        if (discoveredPhrases.length >= story.phrases.length) {
           response.storyCompleted = true
         }
       }
@@ -104,7 +104,7 @@ Description: ${storyBlock.story.description}
     })
 
   } catch (error) {
-    console.error('Error in ask-question API:', error)
+    console.error('Error in affirmation API:', error)
     return NextResponse.json(
       { 
         success: false, 

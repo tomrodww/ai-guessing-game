@@ -10,8 +10,9 @@ interface StoryPageProps {
 }
 
 export async function generateMetadata({ params }: StoryPageProps): Promise<Metadata> {
+  const resolvedParams = await params
   const story = await prisma.story.findUnique({
-    where: { id: params.id },
+    where: { id: resolvedParams.id },
     include: { theme: true }
   })
 
@@ -23,26 +24,22 @@ export async function generateMetadata({ params }: StoryPageProps): Promise<Meta
 
   return {
     title: `${story.title} - AI Guessing Game`,
-    description: story.description,
+    description: story.context,
     keywords: `AI, game, mystery, ${story.theme.name}, ${story.difficulty.toLowerCase()}`,
   }
 }
 
 export default async function StoryPage({ params }: StoryPageProps) {
+  const resolvedParams = await params
   const story = await prisma.story.findUnique({
     where: {
-      id: params.id,
+      id: resolvedParams.id,
       isActive: true
     },
     include: {
       theme: true,
-      blocks: {
-        include: {
-          discoveries: true
-        },
-        orderBy: {
-          order: 'asc'
-        }
+      phrases: {
+        orderBy: { order: 'asc' }
       }
     }
   })

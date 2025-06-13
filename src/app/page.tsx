@@ -6,6 +6,7 @@ import { StoryFilters } from '@/components/StoryFilters'
 import { StoryCard } from '@/components/StoryCard'
 import { Header } from '@/components/Header'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
+import { Button } from '@/components/ui/button'
 import { Play, Sparkles } from 'lucide-react'
 
 export const metadata: Metadata = {
@@ -29,15 +30,15 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         {/* Hero Section */}
         <section className="text-center mb-12">
           <div className="max-w-4xl mx-auto">
-            <h1 className="text-5xl font-bold text-gray-900 mb-6">
+            <h1 className="text-5xl font-bold text-foreground mb-6">
               Uncover the{' '}
-              <span className="text-gradient">Mystery</span>
+              <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">Mystery</span>
             </h1>
-            <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+            <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
               Ask yes/no questions to solve puzzles, uncover secrets, and reveal hidden stories. 
               Each question brings you closer to the truth in these AI-powered interactive mysteries.
             </p>
-            <div className="flex items-center justify-center gap-6 text-sm text-gray-500">
+            <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground">
               <div className="flex items-center gap-2">
                 <Sparkles className="h-4 w-4" />
                 <span>AI-Powered</span>
@@ -64,6 +65,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 }
 
 async function StorySelection({ searchParams }: HomePageProps) {
+  const resolvedSearchParams = await searchParams
+  
   // Fetch themes for filtering
   const themes = await prisma.theme.findMany({
     orderBy: { name: 'asc' }
@@ -74,12 +77,12 @@ async function StorySelection({ searchParams }: HomePageProps) {
     isActive: true
   }
 
-  if (searchParams.theme) {
-    where.themeId = searchParams.theme
+  if (resolvedSearchParams.theme) {
+    where.themeId = resolvedSearchParams.theme
   }
 
-  if (searchParams.difficulty) {
-    where.difficulty = searchParams.difficulty
+  if (resolvedSearchParams.difficulty) {
+    where.difficulty = resolvedSearchParams.difficulty
   }
 
   // Fetch filtered stories
@@ -87,7 +90,7 @@ async function StorySelection({ searchParams }: HomePageProps) {
     where,
     include: {
       theme: true,
-      blocks: {
+      phrases: {
         select: {
           id: true
         }
@@ -106,8 +109,8 @@ async function StorySelection({ searchParams }: HomePageProps) {
       <div className="mb-8">
         <StoryFilters
           themes={themes}
-          selectedTheme={searchParams.theme}
-          selectedDifficulty={searchParams.difficulty}
+          selectedTheme={resolvedSearchParams.theme}
+          selectedDifficulty={resolvedSearchParams.difficulty}
         />
       </div>
 
@@ -123,22 +126,18 @@ async function StorySelection({ searchParams }: HomePageProps) {
       ) : (
         <div className="text-center py-12">
           <div className="max-w-md mx-auto">
-            <div className="text-gray-400 mb-4">
+            <div className="text-muted-foreground mb-4">
               <Sparkles className="h-16 w-16 mx-auto" />
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+            <h3 className="text-xl font-semibold text-foreground mb-2">
               No stories found
             </h3>
-            <p className="text-gray-600 mb-6">
-              Try adjusting your filters to find more stories, or{' '}
-              <Link href="/create" className="text-primary-600 hover:underline">
-                create a new one
-              </Link>
-              .
+            <p className="text-muted-foreground mb-6">
+              Try adjusting your filters to find more stories.
             </p>
-            <Link href="/" className="btn-primary">
-              Clear Filters
-            </Link>
+            <Button asChild>
+              <Link href="/">Clear Filters</Link>
+            </Button>
           </div>
         </div>
       )}

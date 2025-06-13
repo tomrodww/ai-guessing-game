@@ -1,4 +1,4 @@
-import { Theme, Story, StoryBlock, Discovery, Difficulty } from '@prisma/client'
+import { Theme, Story, StoryPhrase, Difficulty, PlayerAffirmation } from '@prisma/client'
 
 // Enhanced types with relations
 export type ThemeWithStories = Theme & {
@@ -7,11 +7,8 @@ export type ThemeWithStories = Theme & {
 
 export type StoryWithDetails = Story & {
   theme: Theme
-  blocks: StoryBlockWithDiscoveries[]
-}
-
-export type StoryBlockWithDiscoveries = StoryBlock & {
-  discoveries: Discovery[]
+  phrases: StoryPhrase[]
+  playerAffirmations?: PlayerAffirmation[]
 }
 
 // API Response types
@@ -21,15 +18,23 @@ export interface ApiResponse<T = any> {
   error?: string
 }
 
-export interface QuestionResponse {
+export interface AffirmationResponse {
   answer: 'Yes' | 'No' | 'Irrelevant'
   explanation?: string
-  discoveryMade?: {
-    fact: string
-    blockId: string
+  affirmationId?: string  // ID of the saved affirmation
+  phraseDiscovered?: {
+    id: string
+    order: number
+    text: string
   }
-  blockCompleted?: boolean
   storyCompleted?: boolean
+}
+
+export interface SolutionResponse {
+  isCorrect: boolean
+  explanation: string
+  actualSolution?: string
+  similarity?: number
 }
 
 // Filter types
@@ -41,19 +46,19 @@ export interface StoryFilters {
 // Game state types
 export interface GameState {
   storyId: string
-  currentBlockIndex: number
-  questions: QuestionHistory[]
-  discoveries: string[] // IDs of discovered facts
-  completedBlocks: string[] // IDs of completed blocks
+  affirmations: AffirmationHistory[]
+  discoveredPhrases: string[] // IDs of discovered phrases
   startedAt: Date
   completedAt?: Date
 }
 
-export interface QuestionHistory {
-  question: string
+export interface AffirmationHistory {
+  affirmation: string
   answer: 'Yes' | 'No' | 'Irrelevant'
   timestamp: Date
   explanation?: string
+  phraseId?: string // If this affirmation relates to a specific phrase
+  isUsed?: boolean // If the related phrase has been fully discovered
 }
 
 // Component prop types
@@ -76,4 +81,4 @@ export interface GameInterfaceProps {
 }
 
 // Utility types
-export { Difficulty, Theme, Story, StoryBlock, Discovery } 
+export { Difficulty, Theme, Story, StoryPhrase, PlayerAffirmation } 
