@@ -6,22 +6,6 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
- * Format difficulty enum to readable string
- */
-export function formatDifficulty(difficulty: string): string {
-  switch (difficulty) {
-    case 'SHORT':
-      return 'Short'
-    case 'MEDIUM':
-      return 'Medium'
-    case 'LONG':
-      return 'Long'
-    default:
-      return difficulty
-  }
-}
-
-/**
  * Get theme colors for UI components (dark mode optimized)
  */
 export function getThemeColors(color: string) {
@@ -75,3 +59,4 @@ export function formatDuration(startTime: Date, endTime?: Date): string {
   }
   return `${seconds}s`
 }
+ 

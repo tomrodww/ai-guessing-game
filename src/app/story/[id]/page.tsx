@@ -9,11 +9,20 @@ interface StoryPageProps {
   }
 }
 
+const getDifficultyLevel = (count: number) => {
+  if (count === 3) return 'Watson'
+  if (count === 5) return 'Holmes'
+  return 'Moriarty'
+}
+
 export async function generateMetadata({ params }: StoryPageProps): Promise<Metadata> {
   const resolvedParams = await params
   const story = await prisma.story.findUnique({
     where: { id: resolvedParams.id },
-    include: { theme: true }
+    include: { 
+      theme: true,
+      phrases: true
+    }
   })
 
   if (!story) {
@@ -25,7 +34,7 @@ export async function generateMetadata({ params }: StoryPageProps): Promise<Meta
   return {
     title: `${story.title} - AI Guessing Game`,
     description: story.context,
-    keywords: `AI, game, mystery, ${story.theme.name}, ${story.difficulty.toLowerCase()}`,
+    keywords: `AI, game, mystery, ${story.theme.name}, ${getDifficultyLevel(story.phrases.length)}`,
   }
 }
 

@@ -32,16 +32,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Build story context for AI evaluation
-    const storyContext = `
-Story: ${story.title}
-Theme: ${story.theme.name}
-Context: ${story.context}
-Phrases to discover: ${story.phrases.map(p => `${p.order}. ${p.text}`).join('\n')}
-    `.trim()
-
-    // Evaluate the affirmation using AI
-    const evaluation = await evaluateAffirmation(affirmation, storyContext, story.phrases)
+    // Evaluate the affirmation using AI with phrases
+    const evaluation = await evaluateAffirmation(affirmation, story.phrases)
 
     let response: AffirmationResponse = {
       answer: evaluation.answer,
@@ -60,8 +52,8 @@ Phrases to discover: ${story.phrases.map(p => `${p.order}. ${p.text}`).join('\n'
 
     response.affirmationId = savedAffirmation.id
 
-    // Handle phrase discovery
-    if (evaluation.answer === 'Yes' && evaluation.matchedPhraseId) {
+    // Handle phrase discovery - only reveal if it's NOT a partial match
+    if (evaluation.answer === 'Yes' && evaluation.matchedPhraseId && !evaluation.isPartialMatch) {
       const matchedPhrase = story.phrases.find(p => p.id === evaluation.matchedPhraseId)
       if (matchedPhrase) {
         response.phraseDiscovered = {
@@ -97,6 +89,9 @@ Phrases to discover: ${story.phrases.map(p => `${p.order}. ${p.text}`).join('\n'
         }
       }
     }
+    
+    // For partial matches, just confirm they're correct but don't reveal phrase
+    // The "Yes" response itself tells them they're on the right track
 
     return NextResponse.json({
       success: true,

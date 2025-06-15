@@ -1,4 +1,4 @@
-import { Suspense } from 'react'
+import React, { Suspense } from 'react'
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
@@ -7,7 +7,7 @@ import { StoryCard } from '@/components/StoryCard'
 import { Header } from '@/components/Header'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { Button } from '@/components/ui/button'
-import { Play, Sparkles } from 'lucide-react'
+import { Sparkles } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'AI Guessing Game - Choose Your Mystery',
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 interface HomePageProps {
   searchParams: {
     theme?: string
-    difficulty?: 'SHORT' | 'MEDIUM' | 'LONG'
+    difficulty?: string
   }
 }
 
@@ -30,24 +30,12 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         {/* Hero Section */}
         <section className="text-center mb-12">
           <div className="max-w-4xl mx-auto">
-            <h1 className="text-5xl font-bold text-foreground mb-6">
-              Uncover the{' '}
-              <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">Mystery</span>
+            <h1 className="text-2xl font-bold text-foreground mb-6">
+              <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">Make your statement. Find the truth<span className='text-blue-800'>.</span></span>
             </h1>
             <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
-              Ask yes/no questions to solve puzzles, uncover secrets, and reveal hidden stories. 
-              Each question brings you closer to the truth in these AI-powered interactive mysteries.
+              
             </p>
-            <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4" />
-                <span>AI-Powered</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Play className="h-4 w-4" />
-                <span>Interactive Stories</span>
-              </div>
-            </div>
           </div>
         </section>
 
@@ -81,12 +69,16 @@ async function StorySelection({ searchParams }: HomePageProps) {
     where.themeId = resolvedSearchParams.theme
   }
 
+  // Filter by difficulty (phrase count)
   if (resolvedSearchParams.difficulty) {
-    where.difficulty = resolvedSearchParams.difficulty
+    const phraseCount = parseInt(resolvedSearchParams.difficulty)
+    where.phrases = {
+      some: {}
+    }
   }
 
   // Fetch filtered stories
-  const stories = await prisma.story.findMany({
+  let stories = await prisma.story.findMany({
     where,
     include: {
       theme: true,
@@ -98,10 +90,15 @@ async function StorySelection({ searchParams }: HomePageProps) {
     },
     orderBy: [
       { theme: { name: 'asc' } },
-      { difficulty: 'asc' },
       { title: 'asc' }
     ]
   })
+
+  // Filter by phrase count on the client side if difficulty is selected
+  if (resolvedSearchParams.difficulty) {
+    const targetPhraseCount = parseInt(resolvedSearchParams.difficulty)
+    stories = stories.filter(story => story.phrases.length === targetPhraseCount)
+  }
 
   return (
     <>
@@ -132,9 +129,6 @@ async function StorySelection({ searchParams }: HomePageProps) {
             <h3 className="text-xl font-semibold text-foreground mb-2">
               No stories found
             </h3>
-            <p className="text-muted-foreground mb-6">
-              Try adjusting your filters to find more stories.
-            </p>
             <Button asChild>
               <Link href="/">Clear Filters</Link>
             </Button>

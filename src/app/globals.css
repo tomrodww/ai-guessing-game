@@ -11,6 +11,8 @@
   
   body {
     @apply bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen;
+    text-decoration: none;
+    line-height: 1;
   }
   
   /* Custom scrollbar */

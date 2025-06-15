@@ -1,13 +1,15 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
+
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model Theme {
@@ -25,17 +27,15 @@ model Theme {
 }
 
 model Story {
-  id         String     @id @default(cuid())
-  title      String
-  context    String // The hint/context that sets up the mystery
-  fullText   String // The complete solution text
-  hints      String[] // Array of 3 hints for the story
-  difficulty Difficulty
-  themeId    String
-  imageUrl   String?
-  isActive   Boolean    @default(true)
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
+  id        String   @id @default(cuid())
+  title     String
+  context   String // The hint/context that sets up the mystery
+  hints     String[] // Array of 3 hints for the story
+  themeId   String
+  imageUrl  String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   theme              Theme               @relation(fields: [themeId], references: [id], onDelete: Cascade)
   phrases            StoryPhrase[] // The phrases that make up the complete story
@@ -69,10 +69,4 @@ model PlayerAffirmation {
   story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
 
   @@map("player_affirmations")
-}
-
-enum Difficulty {
-  SHORT // 3 phrases
-  MEDIUM // 5 phrases
-  LONG // 7 phrases
 }
