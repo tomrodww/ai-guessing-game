@@ -131,6 +131,8 @@ Player Statement: "${affirmation}"
 
 Analyze the player's statement combined with the context and compare it to the phrases. if the player statement is single words or non sens statements, do not reveal any phrases.
 
+VERY IMPORTANT: If the player statement is single word or non sens statements, do not reveal any phrases. return false.
+
 Respond with JSON:
 {
   "shouldReveal": true | false,
