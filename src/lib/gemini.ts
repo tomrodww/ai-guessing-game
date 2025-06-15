@@ -82,12 +82,12 @@ ${phrases.map((phrase) => `ID: ${phrase.id} - "${phrase.text}"`).join('\n')}
 
 STEP 2 - PHRASE REVELATION ANALYSIS:
 
-STRICT RULES FOR REVELATION:
-1. The player must mention ALL key elements of a specific phrase
-2. Key elements = main nouns, verbs, and important descriptors
-3. If ANY key element is missing, DO NOT reveal the phrase
-4. The statement must capture the COMPLETE MEANING of the phrase
-5. Accept words with similar meaning, like 'putting out a fire' and 'fighting a fire', as long as the main idea is the same
+RULES FOR REVELATION:
+1. The player must mention ALL key elements of a specific phrase (consider equivalent meanings)
+2. Key elements = main nouns, verbs, and important descriptors (consider equivalent meanings)
+3. If ANY key element is missing, DO NOT reveal the phrase (consider equivalent meanings)
+4. The statement must capture the COMPLETE MEANING of the phrase (consider equivalent meanings)
+5. Accept words with similar meaning, like 'putting out a fire' and 'fighting a fire', as long as the main idea is the same (consider equivalent meanings)
 
 ANALYSIS PROCESS:
 For each phrase, identify its key elements and check if ALL are present in the player's statement.
@@ -100,6 +100,13 @@ Key elements: HELICOPTER + FIGHTING + FIRE
 - Player: "helicopter was combating fire" → All elements present → REVEAL
 
 Example Analysis:
+Phrase: "One survivor was a doctor"
+- Player: "the survivor was a doctor" → All elements present → REVEAL
+- Player: "the survivor was a surgeon" → All elements present → REVEAL
+- Player: "one of them was a doctor" → All elements present → REVEAL
+- Player: "there was a doctor" → All elements present → REVEAL
+
+Example Analysis:
 Phrase: "The helicopter used lake water"  
 Key elements: HELICOPTER + USED + LAKE + WATER
 - Player: "there was a lake" → Missing: HELICOPTER, USED, WATER → NO REVEAL
@@ -110,9 +117,9 @@ BE EXTREMELY CONSERVATIVE: Only reveal if you are 100% certain ALL key elements 
 Player Statement: "${affirmation}"
 
 Analyze systematically:
-1. For each phrase, list its key elements and get the main idea
+1. For each phrase, list its key elements and get the main idea (consider equivalent meanings)
 2. Check if ALL key elements or the main idea are fully described in the player's statement. considering equivalent words and meaning.
-3. Only return phraseId if ALL elements are present or the main idea is the same
+3. Only return phraseId if ALL elements are present or the main idea is the same (consider equivalent meanings)
 
 Respond with JSON:
 {
