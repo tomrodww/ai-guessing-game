@@ -2,17 +2,12 @@ import { notFound } from 'next/navigation'
 import { Metadata } from 'next'
 import { prisma } from '@/lib/prisma'
 import { GameInterface } from '@/components/GameInterface'
+import { getDifficultyName } from '@/lib/difficulty'
 
 interface StoryPageProps {
   params: Promise<{
     id: string
   }>
-}
-
-const getDifficultyLevel = (count: number) => {
-  if (count === 3) return 'Watson'
-  if (count === 5) return 'Holmes'
-  return 'Moriarty'
 }
 
 export async function generateMetadata({ params }: StoryPageProps): Promise<Metadata> {
@@ -34,7 +29,7 @@ export async function generateMetadata({ params }: StoryPageProps): Promise<Meta
   return {
     title: `${story.title} - AI Guessing Game`,
     description: story.context,
-    keywords: `AI, game, mystery, ${story.theme.name}, ${getDifficultyLevel(story.phrases.length)}`,
+    keywords: `AI, game, mystery, ${story.theme.name}, ${getDifficultyName(story.phrases.length)}`,
   }
 }
 

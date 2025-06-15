@@ -7,6 +7,7 @@ import { StoryCard } from '@/components/StoryCard'
 import { Header } from '@/components/Header'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { Button } from '@/components/ui/button'
+import { matchesDifficultyFilter } from '@/lib/difficulty'
 import { Sparkles } from 'lucide-react'
 
 export const metadata: Metadata = {
@@ -71,15 +72,7 @@ async function StorySelection({ searchParams }: { searchParams: { theme?: string
     where.themeId = resolvedSearchParams.theme
   }
 
-  // Filter by difficulty (phrase count)
-  if (resolvedSearchParams.difficulty) {
-    const phraseCount = parseInt(resolvedSearchParams.difficulty)
-    where.phrases = {
-      some: {}
-    }
-  }
-
-  // Fetch filtered stories
+  // Fetch stories (we'll filter by difficulty on the client side)
   let stories = await prisma.story.findMany({
     where,
     include: {
@@ -96,10 +89,11 @@ async function StorySelection({ searchParams }: { searchParams: { theme?: string
     ]
   })
 
-  // Filter by phrase count on the client side if difficulty is selected
+  // Filter by difficulty using the centralized difficulty system
   if (resolvedSearchParams.difficulty) {
-    const targetPhraseCount = parseInt(resolvedSearchParams.difficulty)
-    stories = stories.filter(story => story.phrases.length === targetPhraseCount)
+    stories = stories.filter(story => 
+      matchesDifficultyFilter(story.phrases.length, resolvedSearchParams.difficulty!)
+    )
   }
 
   return (

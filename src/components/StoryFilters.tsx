@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Theme } from '@prisma/client'
 import { cn } from '@/lib/utils'
+import { DIFFICULTY_LEVELS } from '@/lib/difficulty'
 import { Filter, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
@@ -11,12 +12,6 @@ interface StoryFiltersProps {
   selectedTheme?: string
   selectedDifficulty?: string
 }
-
-const difficultyLevels = [
-  { value: '3', label: 'Watson' },
-  { value: '5', label: 'Holmes' },
-  { value: '7', label: 'Moriarty' }
-]
 
 export function StoryFilters({ 
   themes, 
@@ -55,7 +50,7 @@ export function StoryFilters({
 
       {/* Difficulty Filter */}
       <div className="flex items-center gap-1">
-        {difficultyLevels.map((difficulty, index) => {
+        {DIFFICULTY_LEVELS.map((difficulty, index) => {
           const isSelected = selectedDifficulty === difficulty.value
           
           return (
@@ -74,7 +69,7 @@ export function StoryFilters({
               >
                 {difficulty.label}
               </Button>
-              {index < 2 && <span className="text-muted-foreground mx-1">|</span>}
+              {index < DIFFICULTY_LEVELS.length - 1 && <span className="text-muted-foreground mx-1">|</span>}
             </div>
           )
         })}

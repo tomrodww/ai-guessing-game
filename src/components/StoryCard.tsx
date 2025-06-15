@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import { Story, Theme } from '@prisma/client'
 import { getThemeColors, cn } from '@/lib/utils'
+import { getDifficultyName, DIFFICULTY_LEVELS } from '@/lib/difficulty'
 import { ChevronRight, Eye, Rocket, Hourglass } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -18,24 +19,20 @@ const icons = {
   'Map': () => <Image src="/map.svg" alt="Adventure" width={16} height={16} />,
 }
 
-const getDifficultyName = (count: number) => {
-  if (count === 3) return 'Watson'
-  if (count === 5) return 'Holmes'
-  return 'Moriarty'
-}
+// Note: getDifficultyName is now imported from @/lib/difficulty
 
 const DifficultyHourglasses = ({ level }: { level: string }) => {
-  const difficulty = ['Watson', 'Holmes', 'Moriarty']
-  const levelIndex = difficulty.indexOf(level)
+  const difficultyNames = DIFFICULTY_LEVELS.map(d => d.name)
+  const levelIndex = difficultyNames.indexOf(level)
   
   return (
     <div className="flex items-center gap-1">
-      {[1, 2, 3].map((index) => (
+      {DIFFICULTY_LEVELS.map((_, index) => (
         <Hourglass 
           key={index}
           className={cn(
             "h-3 w-3 transition-colors",
-            index <= levelIndex + 1
+            index <= levelIndex
               ? "text-amber-500 fill-amber-500" 
               : "text-muted-foreground/30"
           )}

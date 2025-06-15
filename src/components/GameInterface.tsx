@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { StoryWithDetails, AffirmationHistory, AffirmationResponse } from '@/types'
 import { getThemeColors, formatDuration, cn } from '@/lib/utils'
+import { getDifficultyName } from '@/lib/difficulty'
 import { 
   ArrowLeft, 
   CheckCircle, 
@@ -51,12 +52,7 @@ const getThemeIcon = (iconName: string) => {
   }
 }
 
-// Calculate difficulty name based on phrase count
-const getDifficultyName = (count: number) => {
-  if (count === 3) return 'Watson'
-  if (count === 5) return 'Holmes'
-  return 'Moriarty'
-}
+// Note: getDifficultyName is now imported from @/lib/difficulty
 
 export function GameInterface({ story }: GameInterfaceProps) {
   const [affirmations, setAffirmations] = useState<AffirmationHistory[]>([])
