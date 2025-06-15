@@ -42,7 +42,7 @@ Story Phrases:
 ${phrases.map((phrase) => `"${phrase.text}"`).join('\n')}
 
 STEP 1 - BASIC VERIFICATION:
-Determine if the player's statement is:
+Determine if the player's statement combined with the context is:
 - "correct": The statement is true based on one or more of the story phrases (consider equivalent meanings)
 - "incorrect": The statement contradicts the story phrases  
 - "irrelevant": The statement cannot be determined true or false from the story phrases
@@ -79,7 +79,7 @@ Respond with JSON:
 
     // STEP 2: Deep phrase revelation analysis
     const step2Prompt = `
-You are doing DEEP ANALYSIS for phrase revelation in a mystery guessing game.
+You are doing DEEP ANALYSIS for phrase revelation in the mystery guessing game.
 
 The player's statement has been verified as CORRECT. Now determine if it should reveal a specific phrase.
 
@@ -88,23 +88,22 @@ ${phrases.map((phrase) => `ID: ${phrase.id} - "${phrase.text}"`).join('\n')}
 
 STEP 2 - PHRASE REVELATION ANALYSIS:
 
-Important: The context is also part of the players statement. the context should be combined with the phrase to get the complete meaning.
+Important: Combine the context with the player's statement and compare it to the phrases.
 
 RULES FOR REVELATION:
 1. The player must describe the main idea of a specific phrase (consider equivalent meanings)
-2. Key elements = main nouns, verbs, and important descriptors (consider equivalent meanings)
-3. If ANY key element is missing, DO NOT reveal the phrase (consider equivalent meanings)
-4. The statement must capture the COMPLETE MEANING of the phrase (consider equivalent meanings)
-5. Accept words with similar meaning, like 'putting out a fire' and 'fighting a fire', as long as the main idea is the same (consider equivalent meanings)
-6. Check the Phrase and see if any important information was missed in the player's statement (consider equivalent meanings)
+2. The statement must capture the main idea of the phrase (consider equivalent meanings)
+3. Accept words with similar meaning, like 'putting out a fire' and 'fighting a fire', as long as the main idea is the same (consider equivalent meanings)
+4. Check the Phrase and see if any important information was missed in the player's statement (combined with the context) (consider equivalent meanings)
+5. The context is also part of the players statement. the context should be combined with the statement before comparing it to the phrases.
 
 ANALYSIS PROCESS:
-For each phrase, identify its main idea and key elements and check if they are present in the player's statement. Also consider the context when evaluating the player's statement. The user has access to the context during the game. Any information that is not related to the context or the phrases, is not relevant to the player's statement.
+For each phrase, identify its main idea and key elements and check if they are present in the player's statement.
 
 Example Analysis:
 Phrase: "A helicopter was fighting the fire"
 Key elements: HELICOPTER + FIGHTING + FIRE
-- Player: "there was a fire" → Missing: HELICOPTER, FIGHTING → NO REVEAL
+- Player: "there was a fire" → Missing: HELICOPTER(or similar words), FIGHTING (or similar words) → NO REVEAL
 - Player: "helicopter was fighting fire" → All elements present → REVEAL
 - Player: "helicopter was combating fire" → All elements present → REVEAL
 
@@ -118,26 +117,19 @@ Phrase: "One survivor was a doctor"
 Example Analysis:
 Phrase: "The helicopter used lake water"  
 Key elements: HELICOPTER + USED + LAKE + WATER
-- Player: "there was a lake" → Missing: HELICOPTER, USED, WATER → NO REVEAL
+- Player: "there was a lake" → Missing: HELICOPTER(or similar words), USED(or similar words), WATER(or similar words) → NO REVEAL
 - Player: "helicopter got water from lake" → All elements present → REVEAL
 
 Example Analysis:
 Context: 'A month after a shipwreck, four survivors are found on an island. Two have one arm missing, one is missing an arm and a leg, and the fourth is whole. Why?'
 Phrase: "One survivor was missing an arm and a leg"
-- Player: "one was missing an arm" → Missing: LEG → NO REVEAL
+- Player: "one was missing an arm" → Missing: LEG(or similar words) → NO REVEAL
 - Player: "one was missing an arm and a leg" → All elements present → REVEAL (even though the word 'survivor' is not mentioned, the context is mentioning that there are survivors)
-- Player: "one of them was missing an arm" → Missing: LEG → NO REVEAL
-
-
-BE CONSERVATIVE: Only reveal if you are 90% or more certain the main idea or key elements are mentioned.
+- Player: "one of them was missing an arm" → Missing: LEG(or similar words) → NO REVEAL
 
 Player Statement: "${affirmation}"
 
-Analyze:
-1. For each phrase, get the main idea and key elements (consider equivalent meanings)
-2. Evaluate if most important key elements or the main idea are described in the player's statement. considering equivalent words and meaning.
-3. Check the Phrase and see if any important information was missed in the player's statement.
-4. Only return phraseId if ALL elements are present or the main idea is the same (consider equivalent meanings)
+Analyze the player's statement combined with the context and compare it to the phrases.
 
 Respond with JSON:
 {
