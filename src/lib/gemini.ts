@@ -40,16 +40,21 @@ ${phrases.map((phrase) => `ID: ${phrase.id} - "${phrase.text}"`).join('\n')}
 
 CRITICAL RULES FOR PHRASE REVELATION:
 - A phrase should ONLY be revealed if the player's statement directly describes the COMPLETE MEANING of that exact sentence
-- The player must mention the KEY ELEMENTS that make that sentence unique and specific
+- The player must mention ALL the KEY ELEMENTS that make that sentence unique and specific
+- Missing ANY key element means NO phrase revelation, even if some elements are correct
 - Related concepts, partial matches, or logical connections are NOT enough to reveal a phrase
-- If the statement is true but doesn't directly describe a complete sentence, respond "correct_no_reveal"
+- If the statement is true but doesn't describe a complete sentence, respond "correct_no_reveal"
 
 EXAMPLES:
-❌ Player says "there was water" → Don't reveal "The helicopter used lake water" (too vague)
-❌ Player says "there was a lake" → Don't reveal "A helicopter was fighting the fire" (no mention of helicopter)
-✅ Player says "there was a lake" → Could reveal "The helicopter used lake water" IF they also mention helicopter using it
-✅ Player says "a helicopter was fighting the fire" → Reveal "A helicopter was fighting the fire" (direct match)
-✅ Player says "the helicopter used water from a lake" → Reveal "The helicopter used lake water" (complete meaning)
+❌ Player says "there was water" → Don't reveal "The helicopter used lake water" (missing helicopter)
+❌ Player says "there was a lake" → Don't reveal "The helicopter used lake water" (missing helicopter)
+❌ Player says "there was a helicopter" → Don't reveal "A helicopter was fighting the fire" (missing fire)
+❌ Player says "there was a fire" → Don't reveal "A helicopter was fighting the fire" (missing helicopter)
+✅ Player says "a helicopter was fighting a fire" → Reveal "A helicopter was fighting the fire" (all elements present)
+✅ Player says "the helicopter used water from a lake" → Reveal "The helicopter used lake water" (all elements present)
+✅ Player says "he was diving in the lake" → Reveal "The man was diving in that lake" (all elements present)
+
+KEY PRINCIPLE: Every important word/concept in the target sentence must be mentioned or clearly implied in the player's statement.
 
 RESPONSE TYPES:
 - "correct_reveal": Player's statement directly describes the complete meaning of a specific sentence
@@ -136,9 +141,9 @@ function fallbackEvaluation(affirmation: string, phrases: StoryPhrase[]): Affirm
              word.length > 2 && phraseWords.some(pWord => pWord.includes(word) || word.includes(pWord))
          );
          
-         // Require very high similarity for phrase revelation (stricter than before)
-         const similarity = commonWords.length / Math.max(phraseWords.length, words.length);
-         if (commonWords.length >= 3 && similarity >= 0.6) {
+         // Require very high similarity for phrase revelation (even stricter)
+         const similarity = commonWords.length / phraseWords.length; // Must cover most of the phrase words
+         if (commonWords.length >= Math.min(4, phraseWords.length) && similarity >= 0.75) {
              return {
                  answer: 'Yes',
                  explanation: phrase.text,
