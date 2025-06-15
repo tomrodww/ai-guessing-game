@@ -15,13 +15,15 @@ export const metadata: Metadata = {
 }
 
 interface HomePageProps {
-  searchParams: {
+  searchParams: Promise<{
     theme?: string
     difficulty?: string
-  }
+  }>
 }
 
 export default async function HomePage({ searchParams }: HomePageProps) {
+  const resolvedSearchParams = await searchParams
+  
   return (
     <div className="min-h-screen">
       <Header />
@@ -43,7 +45,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         <section>
           <div className="max-w-7xl mx-auto">
             <Suspense fallback={<LoadingSpinner />}>
-              <StorySelection searchParams={searchParams} />
+              <StorySelection searchParams={resolvedSearchParams} />
             </Suspense>
           </div>
         </section>
@@ -52,8 +54,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   )
 }
 
-async function StorySelection({ searchParams }: HomePageProps) {
-  const resolvedSearchParams = await searchParams
+async function StorySelection({ searchParams }: { searchParams: { theme?: string; difficulty?: string } }) {
+  const resolvedSearchParams = searchParams
   
   // Fetch themes for filtering
   const themes = await prisma.theme.findMany({

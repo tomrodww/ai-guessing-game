@@ -4,9 +4,9 @@ import { prisma } from '@/lib/prisma'
 import { GameInterface } from '@/components/GameInterface'
 
 interface StoryPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 const getDifficultyLevel = (count: number) => {
