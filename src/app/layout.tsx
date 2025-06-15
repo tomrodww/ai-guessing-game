@@ -2,11 +2,39 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'AI Guessing Game',
-  description: 'An AI-powered story guessing game where you uncover hidden mysteries through yes/no questions',
-  keywords: 'AI, game, mystery, story, guessing, interactive',
-  authors: [{ name: 'AI Guessing Game Team' }],
+  title: 'WhaHappen',
+  description: 'Dive into thrilling mysteries! Make your statement to find the truth.',
+  keywords: 'AI, game, mystery, story, guessing, interactive, puzzle, detective',
+  authors: [{ name: 'WEC Team' }],
   viewport: 'width=device-width, initial-scale=1',
+  
+  // Open Graph tags for social media sharing
+  openGraph: {
+    title: 'WhaHappen - Find the truth',
+    description: 'Dive into thrilling mysteries! Make your statement to find the truth.',
+    url: 'https://whathappen.org',
+    siteName: 'WhaHappen',
+    type: 'website',
+    locale: 'en_US',
+  },
+  
+  // Twitter Card tags
+  twitter: {
+    card: 'summary_large_image',
+    title: 'WhaHappen - Find the truth',
+    description: 'Dive into thrilling mysteries! Make your statement to find the truth.',
+    site: '@whathappen',
+  },
+  
+  // Additional meta tags
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+    },
+  },
 }
 
 export default function RootLayout({

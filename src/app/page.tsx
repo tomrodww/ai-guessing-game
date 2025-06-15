@@ -11,8 +11,24 @@ import { matchesDifficultyFilter } from '@/lib/difficulty'
 import { Sparkles } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'AI Guessing Game - Choose Your Mystery',
-  description: 'Select from various mystery, sci-fi, and adventure stories to begin your AI-powered guessing adventure',
+  title: 'WhaHappen - Find the truth',
+  description: 'Select a story to begin discovering',
+  
+  // Open Graph tags for social media sharing
+  openGraph: {
+    title: 'WhaHappen - Find the truth',
+    description: 'Dive into thrilling mysteries! Make your statement to find the truth.',
+    url: 'https://whathappen.org',
+    siteName: 'WhaHappen',
+    type: 'website',
+  },
+  
+  // Twitter Card tags
+  twitter: {
+    card: 'summary_large_image',
+    title: 'WhaHappen - Find the truth',
+    description: 'Dive into thrilling mysteries! Select from detective puzzles, sci-fi enigmas, and adventure stories.',
+  },
 }
 
 interface HomePageProps {

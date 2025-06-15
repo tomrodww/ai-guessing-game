@@ -38,25 +38,31 @@ You are the Game Master for a text-based guessing game. You must evaluate player
 Story Sentences:
 ${phrases.map((phrase) => `ID: ${phrase.id} - "${phrase.text}"`).join('\n')}
 
-CRITICAL RULES:
-- "correct": The player's statement must convey the COMPLETE MEANING of one of the sentences above. Single words or partial concepts are NOT enough.
-- "incorrect": The player's statement directly contradicts information in the sentences
-- "irrelevant": The player's statement cannot be proven true or false from the sentences
+CRITICAL RULES FOR PHRASE REVELATION:
+- A phrase should ONLY be revealed if the player's statement directly describes the COMPLETE MEANING of that exact sentence
+- The player must mention the KEY ELEMENTS that make that sentence unique and specific
+- Related concepts, partial matches, or logical connections are NOT enough to reveal a phrase
+- If the statement is true but doesn't directly describe a complete sentence, respond "correct_no_reveal"
 
 EXAMPLES:
-❌ Player says "intact" → This is just one word, not a complete meaning
-❌ Player says "doctor" → This is just one word, not a complete meaning  
-✅ Player says "The survivors were intact" → This conveys complete meaning
-✅ Player says "There was a doctor among the survivors" → This conveys complete meaning
+❌ Player says "there was water" → Don't reveal "The helicopter used lake water" (too vague)
+❌ Player says "there was a lake" → Don't reveal "A helicopter was fighting the fire" (no mention of helicopter)
+✅ Player says "there was a lake" → Could reveal "The helicopter used lake water" IF they also mention helicopter using it
+✅ Player says "a helicopter was fighting the fire" → Reveal "A helicopter was fighting the fire" (direct match)
+✅ Player says "the helicopter used water from a lake" → Reveal "The helicopter used lake water" (complete meaning)
 
-The player must express a COMPLETE IDEA or FACT, not just mention a keyword.
+RESPONSE TYPES:
+- "correct_reveal": Player's statement directly describes the complete meaning of a specific sentence
+- "correct_no_reveal": Player's statement is true but doesn't describe a complete sentence
+- "incorrect": Player's statement contradicts the story
+- "irrelevant": Player's statement cannot be determined from the story
 
 Player Statement: "${affirmation}"
 
 Respond with JSON in this exact format:
 {
-  "status": "correct" | "incorrect" | "irrelevant",
-  "phraseId": "the exact ID of the matching sentence if correct, empty string otherwise"
+  "status": "correct_reveal" | "correct_no_reveal" | "incorrect" | "irrelevant",
+  "phraseId": "the exact ID of the matching sentence if correct_reveal, empty string otherwise"
 }
      `;
 
@@ -70,12 +76,18 @@ Respond with JSON in this exact format:
      const status = aiResponse.status;
      const phraseId = aiResponse.phraseId;
 
-     if (status === 'correct' && phraseId) {
+     if (status === 'correct_reveal' && phraseId) {
        const matchedPhrase = phrases.find(p => p.id === phraseId);
        return {
          answer: 'Yes',
          explanation: matchedPhrase?.text || 'Phrase revealed',
          matchedPhraseId: phraseId,
+         isPartialMatch: false,
+       };
+     } else if (status === 'correct_no_reveal') {
+       return {
+         answer: 'Yes',
+         explanation: 'That statement is true but doesn\'t describe a complete sentence.',
          isPartialMatch: false,
        };
      } else if (status === 'incorrect') {
@@ -117,19 +129,37 @@ function fallbackEvaluation(affirmation: string, phrases: StoryPhrase[]): Affirm
          };
      }
      
-     // Look for semantic matches with multiple key words
+     // Look for very strong semantic matches that would warrant phrase revelation
      for (const phrase of phrases) {
          const phraseWords = phrase.text.toLowerCase().split(' ').filter(word => word.length > 2);
          const commonWords = words.filter(word => 
              word.length > 2 && phraseWords.some(pWord => pWord.includes(word) || word.includes(pWord))
          );
          
-         // Require at least 2 meaningful words to match and good coverage
-         if (commonWords.length >= 2 && commonWords.length / Math.max(words.length, 3) >= 0.4) {
+         // Require very high similarity for phrase revelation (stricter than before)
+         const similarity = commonWords.length / Math.max(phraseWords.length, words.length);
+         if (commonWords.length >= 3 && similarity >= 0.6) {
              return {
                  answer: 'Yes',
                  explanation: phrase.text,
                  matchedPhraseId: phrase.id,
+                 isPartialMatch: false
+             };
+         }
+     }
+     
+     // Check for partial matches that should get "Yes" but no phrase revelation
+     for (const phrase of phrases) {
+         const phraseWords = phrase.text.toLowerCase().split(' ').filter(word => word.length > 2);
+         const commonWords = words.filter(word => 
+             word.length > 2 && phraseWords.some(pWord => pWord.includes(word) || word.includes(pWord))
+         );
+         
+         // Lower threshold for confirming truth without revealing phrase
+         if (commonWords.length >= 1 && commonWords.length / Math.max(words.length, 3) >= 0.3) {
+             return {
+                 answer: 'Yes',
+                 explanation: 'That statement is true but doesn\'t describe a complete sentence.',
                  isPartialMatch: false
              };
          }
