@@ -1,4 +1,4 @@
-import { Theme, Story, StoryPhrase, Difficulty, PlayerAffirmation } from '@prisma/client'
+import { Theme, Story, StoryPhrase, PlayerAffirmation } from '@prisma/client'
 
 // Enhanced types with relations
 export type ThemeWithStories = Theme & {
@@ -40,7 +40,7 @@ export interface SolutionResponse {
 // Filter types
 export interface StoryFilters {
   themeId?: string
-  difficulty?: Difficulty
+  difficulty?: string
 }
 
 // Game state types
@@ -70,9 +70,9 @@ export interface StoryCardProps {
 export interface FilterProps {
   themes: Theme[]
   selectedTheme?: string
-  selectedDifficulty?: Difficulty
+  selectedDifficulty?: string
   onThemeChange: (themeId?: string) => void
-  onDifficultyChange: (difficulty?: Difficulty) => void
+  onDifficultyChange: (difficulty?: string) => void
 }
 
 export interface GameInterfaceProps {
@@ -81,4 +81,4 @@ export interface GameInterfaceProps {
 }
 
 // Utility types
-export { Difficulty, Theme, Story, StoryPhrase, PlayerAffirmation } 
+export type { Theme, Story, StoryPhrase, PlayerAffirmation } 
