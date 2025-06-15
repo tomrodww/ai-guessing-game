@@ -81,7 +81,7 @@ Respond with JSON:
     const step2Prompt = `
 You are doing DEEP ANALYSIS for phrase revelation in the mystery guessing game.
 
-The player's statement has been verified as CORRECT. Now determine if it should reveal a specific phrase. If the user is sending single words or non sens statements, do not reveal any phrases.
+The player's statement has been verified as CORRECT. Now determine if it should reveal a specific phrase. If the player statement is single words or non sens statements, do not reveal any phrases.
 
 Story Phrases:
 ${phrases.map((phrase) => `ID: ${phrase.id} - "${phrase.text}"`).join('\n')}
@@ -98,7 +98,7 @@ RULES FOR REVELATION:
 5. The context is also part of the players statement. the context should be combined with the statement before comparing it to the phrases.
 
 ANALYSIS PROCESS:
-For each phrase, identify its main idea and key elements and check if they are present in the player's statement. if the user is sending single words or non sens statements, do not reveal any phrases.
+For each phrase, identify its main idea and key elements and check if they are present in the player's statement. if the player statement is single words or non sens statements, do not reveal any phrases.
 
 Example Analysis:
 Phrase: "A helicopter was fighting the fire"
@@ -129,7 +129,7 @@ Phrase: "One survivor was missing an arm and a leg"
 
 Player Statement: "${affirmation}"
 
-Analyze the player's statement combined with the context and compare it to the phrases. if the user is sending single words or non sens statements, do not reveal any phrases.
+Analyze the player's statement combined with the context and compare it to the phrases. if the player statement is single words or non sens statements, do not reveal any phrases.
 
 Respond with JSON:
 {
