@@ -13,7 +13,7 @@ export interface AffirmationEvaluationResult {
 
 /**
  * Evaluates a player's affirmation against story phrases using Gemini AI.
- * The AI is instructed to return a structured JSON response for reliable parsing.
+ * Uses a two-step verification process for better accuracy.
  * @param affirmation The player's statement.
  * @param phrases An array of story phrase objects, each with an id and text.
  * @returns An evaluation result object.
@@ -23,7 +23,6 @@ export async function evaluateAffirmation(
   phrases: StoryPhrase[]
 ): Promise<AffirmationEvaluationResult> {
   try {
-    // Using a model that supports JSON output is key.
     const model = genAI.getGenerativeModel({
       model: 'gemini-2.5-flash',
       generationConfig: {
@@ -31,106 +30,120 @@ export async function evaluateAffirmation(
       },
     });
 
-         // The prompt is now much more robust. It tells the AI exactly what JSON to return.
-     const prompt = `
-You are the Game Master for a mystery guessing game. Players make statements, and you must decide whether to reveal story phrases.
+    // STEP 1: Basic correctness verification
+    const step1Prompt = `
+You are evaluating a player's statement in a mystery guessing game.
+
+Story Phrases:
+${phrases.map((phrase) => `"${phrase.text}"`).join('\n')}
+
+STEP 1 - BASIC VERIFICATION:
+Determine if the player's statement is:
+- "correct": The statement is true based on one or more of the story phrases (consider equivalent meanings)
+- "incorrect": The statement contradicts the story phrases  
+- "irrelevant": The statement cannot be determined true or false from the story phrases
+
+Player Statement: "${affirmation}"
+
+Respond with JSON:
+{
+  "status": "correct" | "incorrect" | "irrelevant"
+}
+    `;
+
+    const step1Result = await model.generateContent(step1Prompt);
+    const step1Response = JSON.parse(step1Result.response.text());
+
+    // If not correct, return immediately
+    if (step1Response.status !== 'correct') {
+      if (step1Response.status === 'incorrect') {
+        return {
+          answer: 'No',
+          explanation: 'That statement is incorrect.',
+          isPartialMatch: false,
+        };
+      } else {
+        return {
+          answer: 'Irrelevant',
+          explanation: 'That statement is irrelevant to the story.',
+          isPartialMatch: false,
+        };
+      }
+    }
+
+    // STEP 2: Deep phrase revelation analysis
+    const step2Prompt = `
+You are doing DEEP ANALYSIS for phrase revelation in a mystery guessing game.
+
+The player's statement has been verified as CORRECT. Now determine if it should reveal a specific phrase.
 
 Story Phrases:
 ${phrases.map((phrase) => `ID: ${phrase.id} - "${phrase.text}"`).join('\n')}
 
-PHRASE REVELATION RULES - BE EXTREMELY STRICT:
+STEP 2 - PHRASE REVELATION ANALYSIS:
 
-1. ONLY reveal a phrase if the player's statement contains ALL major elements of that exact phrase
-2. Each phrase has MULTIPLE key elements - the player must mention ALL of them
-3. If ANY key element is missing, DO NOT reveal the phrase, even if other elements are correct
+STRICT RULES FOR REVELATION:
+1. The player must mention ALL key elements of a specific phrase
+2. Key elements = main nouns, verbs, and important descriptors
+3. If ANY key element is missing, DO NOT reveal the phrase
+4. The statement must capture the COMPLETE MEANING of the phrase
+5. Accept words with similar meaning, like 'putting out a fire' and 'fighting a fire', as long as the main idea is the same
 
-DETAILED ANALYSIS PROCESS:
-For each phrase, identify ALL key elements (nouns, verbs, important descriptors):
+ANALYSIS PROCESS:
+For each phrase, identify its key elements and check if ALL are present in the player's statement.
 
-Example: "A helicopter was fighting the fire"
-- Key elements: HELICOPTER + FIGHTING + FIRE
-- Player says "there was a fire" → Missing HELICOPTER and FIGHTING → NO REVEAL
-- Player says "there was a helicopter" → Missing FIRE and FIGHTING → NO REVEAL  
-- Player says "something was fighting the fire" → Missing HELICOPTER → NO REVEAL
-- Player says "a helicopter was fighting a fire" → ALL elements present → REVEAL
+Example Analysis:
+Phrase: "A helicopter was fighting the fire"
+Key elements: HELICOPTER + FIGHTING + FIRE
+- Player: "there was a fire" → Missing: HELICOPTER, FIGHTING → NO REVEAL
+- Player: "helicopter was fighting fire" → All elements present → REVEAL
+- Player: "helicopter was combating fire" → All elements present → REVEAL
 
-Example: "The helicopter used lake water"
-- Key elements: HELICOPTER + USED + LAKE + WATER
-- Player says "there was a lake" → Missing HELICOPTER, USED, WATER → NO REVEAL
-- Player says "there was water" → Missing HELICOPTER, USED, LAKE → NO REVEAL
-- Player says "helicopter used water" → Missing LAKE → NO REVEAL
-- Player says "helicopter got water from lake" → ALL elements present → REVEAL
+Example Analysis:
+Phrase: "The helicopter used lake water"  
+Key elements: HELICOPTER + USED + LAKE + WATER
+- Player: "there was a lake" → Missing: HELICOPTER, USED, WATER → NO REVEAL
+- Player: "helicopter got water from lake" → All elements present → REVEAL
 
-COMMON MISTAKES TO AVOID:
-❌ Don't reveal based on single words or partial concepts
-❌ Don't reveal based on logical connections or implications
-❌ Don't reveal if the statement is "close enough" - it must be complete
-❌ Don't reveal if you can infer the missing elements - they must be stated
-
-RESPONSE GUIDELINES:
-- "correct_reveal": Player mentioned ALL key elements of a specific phrase
-- "correct_no_reveal": Player's statement is true but incomplete (missing key elements)
-- "incorrect": Player's statement contradicts the story
-- "irrelevant": Player's statement cannot be determined from the story
-
-BE CONSERVATIVE: When in doubt, choose "correct_no_reveal" rather than "correct_reveal"
+BE EXTREMELY CONSERVATIVE: Only reveal if you are 100% certain ALL key elements are mentioned or the main idea is the same.
 
 Player Statement: "${affirmation}"
 
-Analyze each phrase systematically:
-1. List the key elements of each phrase
-2. Check if the player's statement contains ALL key elements
-3. Only reveal if 100% of key elements are present
+Analyze systematically:
+1. For each phrase, list its key elements and get the main idea
+2. Check if ALL key elements or the main idea are fully described in the player's statement. considering equivalent words and meaning.
+3. Only return phraseId if ALL elements are present or the main idea is the same
 
 Respond with JSON:
 {
-  "status": "correct_reveal" | "correct_no_reveal" | "incorrect" | "irrelevant",
-  "phraseId": "the exact ID if correct_reveal, empty string otherwise"
+  "shouldReveal": true | false,
+  "phraseId": "exact phrase ID if shouldReveal is true, empty string otherwise",
+  "reasoning": "brief explanation of your analysis"
 }
-     `;
+    `;
 
-    const result = await model.generateContent(prompt);
-    const responseText = result.response.text();
-    
-    // Parse the JSON response from the AI.
-    const aiResponse = JSON.parse(responseText);
+    const step2Result = await model.generateContent(step2Prompt);
+    const step2Response = JSON.parse(step2Result.response.text());
 
-         // Now, we map the structured AI response to our desired result format.
-     const status = aiResponse.status;
-     const phraseId = aiResponse.phraseId;
-
-     if (status === 'correct_reveal' && phraseId) {
-       const matchedPhrase = phrases.find(p => p.id === phraseId);
-       return {
-         answer: 'Yes',
-         explanation: matchedPhrase?.text || 'Phrase revealed',
-         matchedPhraseId: phraseId,
-         isPartialMatch: false,
-       };
-     } else if (status === 'correct_no_reveal') {
-       return {
-         answer: 'Yes',
-         explanation: 'That statement is true but doesn\'t describe a complete sentence.',
-         isPartialMatch: false,
-       };
-     } else if (status === 'incorrect') {
-       return {
-         answer: 'No',
-         explanation: 'That statement is incorrect.',
-         isPartialMatch: false,
-       };
-     } else { // 'irrelevant'
-       return {
-         answer: 'Irrelevant',
-         explanation: 'That statement is irrelevant to the story.',
-         isPartialMatch: false,
-       };
-     }
+    // Return final result
+    if (step2Response.shouldReveal && step2Response.phraseId) {
+      const matchedPhrase = phrases.find(p => p.id === step2Response.phraseId);
+      return {
+        answer: 'Yes',
+        explanation: matchedPhrase?.text || 'Phrase revealed',
+        matchedPhraseId: step2Response.phraseId,
+        isPartialMatch: false,
+      };
+    } else {
+      return {
+        answer: 'Yes',
+        explanation: 'That statement is true but doesn\'t describe a complete sentence.',
+        isPartialMatch: false,
+      };
+    }
 
   } catch (error) {
     console.error('Error evaluating affirmation with Gemini:', error);
-    // The fallback function is a great idea for handling API errors.
-    // Make sure it returns data in the same format.
     return fallbackEvaluation(affirmation, phrases);
   }
 }
