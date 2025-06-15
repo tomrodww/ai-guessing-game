@@ -25,7 +25,7 @@ export async function evaluateAffirmation(
 ): Promise<AffirmationEvaluationResult> {
   try {
     const model = genAI.getGenerativeModel({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-1.5-flash',
       generationConfig: {
         responseMimeType: "application/json",
       },
@@ -45,7 +45,7 @@ STEP 1 - BASIC VERIFICATION:
 Determine if the player's statement combined with the context is:
 - "correct": The statement is true based on one or more of the story phrases (consider equivalent meanings)
 - "incorrect": The statement contradicts the story phrases  
-- "irrelevant": The statement cannot be determined true or false from the story phrases
+- "irrelevant": The statement cannot be determined true or false from the story phrases. if the user is sending single words or non sens statements, return irrelevant.
 
 consider the context when evaluating the player's statement. The user already has access to the context at the start of the game. Any information that is not related to the context or the phrases, is not relevant to the player's statement.
 
