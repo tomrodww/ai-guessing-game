@@ -116,10 +116,11 @@ BE EXTREMELY CONSERVATIVE: Only reveal if you are 100% certain ALL key elements 
 
 Player Statement: "${affirmation}"
 
-Analyze systematically:
-1. For each phrase, list its key elements and get the main idea (consider equivalent meanings)
-2. Check if ALL key elements or the main idea are fully described in the player's statement. considering equivalent words and meaning.
-3. Only return phraseId if ALL elements are present or the main idea is the same (consider equivalent meanings)
+Analyze:
+1. For each phrase, get the main idea and key elements (consider equivalent meanings)
+2. Evaluate if most important key elements or the main idea are described in the player's statement. considering equivalent words and meaning.
+3. Check the Phrase and see if any important information was missed in the player's statement.
+4. Only return phraseId if ALL elements are present or the main idea is the same (consider equivalent meanings)
 
 Respond with JSON:
 {
