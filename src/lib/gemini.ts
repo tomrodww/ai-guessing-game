@@ -20,7 +20,8 @@ export interface AffirmationEvaluationResult {
  */
 export async function evaluateAffirmation(
   affirmation: string,
-  phrases: StoryPhrase[]
+  phrases: StoryPhrase[],
+  context: string
 ): Promise<AffirmationEvaluationResult> {
   try {
     const model = genAI.getGenerativeModel({
@@ -34,6 +35,9 @@ export async function evaluateAffirmation(
     const step1Prompt = `
 You are evaluating a player's statement in a mystery guessing game.
 
+Context:
+${context}
+
 Story Phrases:
 ${phrases.map((phrase) => `"${phrase.text}"`).join('\n')}
 
@@ -42,6 +46,8 @@ Determine if the player's statement is:
 - "correct": The statement is true based on one or more of the story phrases (consider equivalent meanings)
 - "incorrect": The statement contradicts the story phrases  
 - "irrelevant": The statement cannot be determined true or false from the story phrases
+
+consider the context when evaluating the player's statement. The user already has access to the context at the start of the game. Any information that is not related to the context or the phrases, is not relevant to the player's statement.
 
 Player Statement: "${affirmation}"
 
@@ -82,15 +88,18 @@ ${phrases.map((phrase) => `ID: ${phrase.id} - "${phrase.text}"`).join('\n')}
 
 STEP 2 - PHRASE REVELATION ANALYSIS:
 
+Important: The context is also part of the players statement. the context should be combined with the phrase to get the complete meaning.
+
 RULES FOR REVELATION:
-1. The player must mention ALL key elements of a specific phrase (consider equivalent meanings)
+1. The player must describe the main idea of a specific phrase (consider equivalent meanings)
 2. Key elements = main nouns, verbs, and important descriptors (consider equivalent meanings)
 3. If ANY key element is missing, DO NOT reveal the phrase (consider equivalent meanings)
 4. The statement must capture the COMPLETE MEANING of the phrase (consider equivalent meanings)
 5. Accept words with similar meaning, like 'putting out a fire' and 'fighting a fire', as long as the main idea is the same (consider equivalent meanings)
+6. Check the Phrase and see if any important information was missed in the player's statement (consider equivalent meanings)
 
 ANALYSIS PROCESS:
-For each phrase, identify its key elements and check if ALL are present in the player's statement.
+For each phrase, identify its main idea and key elements and check if they are present in the player's statement. Also consider the context when evaluating the player's statement. The user has access to the context during the game. Any information that is not related to the context or the phrases, is not relevant to the player's statement.
 
 Example Analysis:
 Phrase: "A helicopter was fighting the fire"
@@ -112,7 +121,15 @@ Key elements: HELICOPTER + USED + LAKE + WATER
 - Player: "there was a lake" → Missing: HELICOPTER, USED, WATER → NO REVEAL
 - Player: "helicopter got water from lake" → All elements present → REVEAL
 
-BE EXTREMELY CONSERVATIVE: Only reveal if you are 100% certain ALL key elements are mentioned or the main idea is the same.
+Example Analysis:
+Context: 'A month after a shipwreck, four survivors are found on an island. Two have one arm missing, one is missing an arm and a leg, and the fourth is whole. Why?'
+Phrase: "One survivor was missing an arm and a leg"
+- Player: "one was missing an arm" → Missing: LEG → NO REVEAL
+- Player: "one was missing an arm and a leg" → All elements present → REVEAL (even though the word 'survivor' is not mentioned, the context is mentioning that there are survivors)
+- Player: "one of them was missing an arm" → Missing: LEG → NO REVEAL
+
+
+BE CONSERVATIVE: Only reveal if you are 90% or more certain the main idea or key elements are mentioned.
 
 Player Statement: "${affirmation}"
 
