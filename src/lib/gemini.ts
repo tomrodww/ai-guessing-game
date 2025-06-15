@@ -98,7 +98,7 @@ RULES FOR REVELATION:
 5. The context is also part of the players statement. the context should be combined with the statement before comparing it to the phrases.
 
 ANALYSIS PROCESS:
-For each phrase, identify its main idea and key elements and check if they are present in the player's statement.
+For each phrase, identify its main idea and key elements and check if they are present in the player's statement. if the user is sending single words or non sens statements, do not reveal any phrases.
 
 Example Analysis:
 Phrase: "A helicopter was fighting the fire"
@@ -129,7 +129,7 @@ Phrase: "One survivor was missing an arm and a leg"
 
 Player Statement: "${affirmation}"
 
-Analyze the player's statement combined with the context and compare it to the phrases.
+Analyze the player's statement combined with the context and compare it to the phrases. if the user is sending single words or non sens statements, do not reveal any phrases.
 
 Respond with JSON:
 {
