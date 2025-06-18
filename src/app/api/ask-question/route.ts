@@ -97,16 +97,7 @@ export async function POST(request: NextRequest) {
         // Add coin reward for revealing a phrase
         response.coinsEarned = 3
 
-        // Mark related affirmations as used
-        await prisma.playerAffirmation.updateMany({
-          where: {
-            storyId: story.id,
-            phraseId: matchedPhrase.id
-          },
-          data: {
-            isUsed: true
-          }
-        })
+        // No need to mark affirmations as used since we removed that functionality
 
         // Check if all phrases are discovered (story completed)
         const discoveredPhrases = await prisma.playerAffirmation.findMany({

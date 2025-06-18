@@ -73,7 +73,6 @@ export interface AffirmationHistory {
   timestamp: Date
   explanation?: string
   phraseId?: string // If this affirmation relates to a specific phrase
-  isUsed?: boolean // If the related phrase has been fully discovered
 }
 
 // Component prop types
