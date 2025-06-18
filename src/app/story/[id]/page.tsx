@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: StoryPageProps): Promise<Meta
   }
 
   return {
-    title: `${story.title} - AI Guessing Game`,
+    title: `${story.title} | WhaHappen`,
     description: story.context,
     keywords: `AI, game, mystery, ${story.theme.name}, ${getDifficultyName(story.phrases.length)}`,
   }

@@ -1,7 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -40,6 +39,7 @@ model Story {
   theme              Theme               @relation(fields: [themeId], references: [id], onDelete: Cascade)
   phrases            StoryPhrase[] // The phrases that make up the complete story
   playerAffirmations PlayerAffirmation[]
+  gameSessions       GameSession[]
 
   @@map("stories")
 }
@@ -63,10 +63,23 @@ model PlayerAffirmation {
   affirmation String // The affirmation/statement made by the player
   response    String // "Yes", "No", or "Irrelevant"
   phraseId    String? // If response is "Yes", which phrase does this relate to
-  isUsed      Boolean  @default(false) // True when the related phrase is fully discovered
   createdAt   DateTime @default(now())
 
   story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
 
   @@map("player_affirmations")
+}
+
+model GameSession {
+  id              String    @id @default(cuid())
+  storyId         String
+  coins           Int       @default(7) // Starting coins
+  hintsUnlocked   Int[]     @default([]) // Array of hint indices that have been unlocked (0, 1, 2)
+  phrasesRevealed Int       @default(0) // Count of phrases revealed for coin rewards
+  startedAt       DateTime  @default(now())
+  completedAt     DateTime?
+
+  story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@map("game_sessions")
 }

@@ -28,6 +28,9 @@ export interface AffirmationResponse {
     text: string
   }
   storyCompleted?: boolean
+  isPartialMatch?: boolean  // Whether the answer is correct but not specific enough
+  coinsEarned?: number  // Coins earned for revealing a phrase
+  totalCoins?: number   // Current total coins
 }
 
 export interface SolutionResponse {
@@ -48,6 +51,18 @@ export interface GameState {
   storyId: string
   affirmations: AffirmationHistory[]
   discoveredPhrases: string[] // IDs of discovered phrases
+  startedAt: Date
+  completedAt?: Date
+  coins: number // Current coins
+  hintsUnlocked: number[] // Array of unlocked hint indices
+}
+
+export interface GameSession {
+  id: string
+  storyId: string
+  coins: number
+  hintsUnlocked: number[]
+  phrasesRevealed: number
   startedAt: Date
   completedAt?: Date
 }

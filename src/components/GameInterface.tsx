@@ -17,12 +17,10 @@ import {
   Lightbulb,
   Target,
   BookOpen,
-  Check,
-  X,
-  AlertCircle,
   Eye,
   Rocket,
-  Brain
+  Coins,
+  ShieldQuestionIcon
 } from 'lucide-react'
 
 interface GameInterfaceProps {
@@ -35,7 +33,6 @@ interface PlayerAffirmation {
   timestamp: Date
   explanation?: string
   phraseId?: string
-  isUsed?: boolean
 }
 
 // Custom icon component that handles the map.svg for adventure themes
@@ -62,6 +59,9 @@ export function GameInterface({ story }: GameInterfaceProps) {
   const [gameStartTime] = useState(new Date())
   const [gameCompleted, setGameCompleted] = useState(false)
   const [discoveredPhrases, setDiscoveredPhrases] = useState<string[]>([])
+  const [coins, setCoins] = useState(7) // Starting coins
+  const [hintsUnlocked, setHintsUnlocked] = useState<number[]>([]) // Unlocked hint indices
+  const [sessionId, setSessionId] = useState<string | null>(null)
   
   const chatEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -71,6 +71,10 @@ export function GameInterface({ story }: GameInterfaceProps) {
   const colors = getThemeColors(story.theme.color)
   const difficultyName = getDifficultyName(totalPhrases)
   const progress = Math.round((discoveredPhrases.length / totalPhrases) * 100)
+  
+  // Calculate word count for validation
+  const wordCount = currentAffirmation.trim().split(/\s+/).filter(word => word.length > 0).length
+  const isValidStatement = currentAffirmation.trim() && !isSubmitting && currentAffirmation.length <= 50 && wordCount >= 3 && coins >= 1
 
   // Auto-scroll to top when new messages are added (since newest is now at top)
   useEffect(() => {
@@ -87,8 +91,76 @@ export function GameInterface({ story }: GameInterfaceProps) {
     inputRef.current?.focus()
   }, [])
 
+  // Initialize game session
+  useEffect(() => {
+    const startSession = async () => {
+      try {
+        const response = await fetch('/api/game-session', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            action: 'start',
+            storyId: story.id,
+          }),
+        })
+
+        const result = await response.json()
+        if (result.success) {
+          setSessionId(result.data.sessionId)
+          setCoins(result.data.coins)
+          setHintsUnlocked(result.data.hintsUnlocked)
+        }
+      } catch (error) {
+        console.error('Error starting game session:', error)
+      }
+    }
+
+    startSession()
+  }, [story.id])
+
   const submitAffirmation = async () => {
     if (!currentAffirmation.trim() || isSubmitting) return
+
+    // Check character limit before sending
+    if (currentAffirmation.length > 50) {
+      const errorAffirmation: AffirmationHistory = {
+        affirmation: currentAffirmation,
+        answer: 'Irrelevant',
+        timestamp: new Date(),
+        explanation: `Statement too long! Please keep it under 50 characters. (Current: ${currentAffirmation.length})`,
+      }
+      setAffirmations(prev => [...prev, errorAffirmation])
+      setCurrentAffirmation('')
+      return
+    }
+
+    // Check minimum word count before sending
+    if (wordCount < 3) {
+      const errorAffirmation: AffirmationHistory = {
+        affirmation: currentAffirmation,
+        answer: 'Irrelevant',
+        timestamp: new Date(),
+        explanation: `Please use at least 3 words in your statement. (Current: ${wordCount} word${wordCount !== 1 ? 's' : ''})`,
+      }
+      setAffirmations(prev => [...prev, errorAffirmation])
+      setCurrentAffirmation('')
+      return
+    }
+
+    // Check if player has enough coins to make a statement
+    if (coins < 1) {
+      const errorAffirmation: AffirmationHistory = {
+        affirmation: currentAffirmation,
+        answer: 'Irrelevant',
+        timestamp: new Date(),
+        explanation: 'You need at least 1 coin to make a statement. Reveal phrases to earn more coins!',
+      }
+      setAffirmations(prev => [...prev, errorAffirmation])
+      setCurrentAffirmation('')
+      return
+    }
 
     setIsSubmitting(true)
     const affirmationText = currentAffirmation.trim()
@@ -103,6 +175,7 @@ export function GameInterface({ story }: GameInterfaceProps) {
         body: JSON.stringify({
           affirmation: affirmationText,
           storyId: story.id,
+          sessionId,
         }),
       })
 
@@ -110,6 +183,9 @@ export function GameInterface({ story }: GameInterfaceProps) {
 
       if (result.success) {
         const data: AffirmationResponse = result.data
+
+        // Deduct 1 coin for making a statement
+        setCoins(prev => prev - 1)
 
         // Add affirmation to history
         const newAffirmation: AffirmationHistory = {
@@ -130,7 +206,6 @@ export function GameInterface({ story }: GameInterfaceProps) {
             timestamp: new Date(),
             explanation: data.explanation,
             phraseId: data.phraseDiscovered?.id,
-            isUsed: false
           }
           setYesAffirmations(prev => [...prev, newYesAffirmation])
         }
@@ -139,14 +214,10 @@ export function GameInterface({ story }: GameInterfaceProps) {
         if (data.phraseDiscovered) {
           setDiscoveredPhrases(prev => [...prev, data.phraseDiscovered!.id])
           
-          // Mark related affirmations as used
-          setYesAffirmations(prev => 
-            prev.map(aff => 
-              aff.phraseId === data.phraseDiscovered!.id 
-                ? { ...aff, isUsed: true }
-                : aff
-            )
-          )
+          // Add coins for revealing a phrase (3 coins per phrase)
+          if (data.coinsEarned) {
+            setCoins(prev => prev + data.coinsEarned!)
+          }
         }
 
         // Handle story completion
@@ -196,34 +267,63 @@ export function GameInterface({ story }: GameInterfaceProps) {
     setDiscoveredPhrases([])
     setGameCompleted(false)
     setCurrentAffirmation('')
+    setCoins(7) // Reset to starting coins
+    setHintsUnlocked([]) // Reset unlocked hints
     inputRef.current?.focus()
   }
 
-  const getAnswerIcon = (answer: string) => {
-    switch (answer) {
-      case 'Yes':
-        return <Check className="w-4 h-4 text-green-600" />
-      case 'No':
-        return <X className="w-4 h-4 text-red-600" />
-      case 'Irrelevant':
-        return <AlertCircle className="w-4 h-4 text-muted-foreground" />
-      default:
-        return null
+  const unlockHint = async (hintIndex: number) => {
+    const cost = hintIndex + 1 // 1 coin for first hint, 2 for second, 3 for third
+    if (coins >= cost && !hintsUnlocked.includes(hintIndex) && sessionId) {
+      try {
+        console.log('Attempting to unlock hint:', { hintIndex, cost, sessionId, coins })
+        
+        const response = await fetch('/api/game-session', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            action: 'unlock-hint',
+            sessionId,
+            hintIndex,
+          }),
+        })
+
+        console.log('Response status:', response.status)
+        console.log('Response ok:', response.ok)
+
+        if (!response.ok) {
+          console.error('Response not ok:', response.status, response.statusText)
+          return
+        }
+
+        const result = await response.json()
+        console.log('Unlock hint result:', result)
+        
+        if (result.success) {
+          setCoins(result.data.coins)
+          setHintsUnlocked(result.data.hintsUnlocked)
+        } else {
+          console.error('Failed to unlock hint:', result.error)
+        }
+      } catch (error) {
+        console.error('Error unlocking hint:', error)
+      }
+    } else {
+      console.log('Cannot unlock hint:', { 
+        hasEnoughCoins: coins >= cost, 
+        notAlreadyUnlocked: !hintsUnlocked.includes(hintIndex),
+        hasSessionId: !!sessionId,
+        coins,
+        cost,
+        hintIndex,
+        hintsUnlocked
+      })
     }
   }
 
-  const getAnswerColor = (answer: string) => {
-    switch (answer) {
-      case 'Yes':
-        return 'bg-green-900/20 border-green-700 text-green-300'
-      case 'No':
-        return 'bg-red-900/20 border-red-700 text-red-300'
-      case 'Irrelevant':
-        return 'bg-muted border-border text-muted-foreground'
-      default:
-        return 'bg-muted border-border text-muted-foreground'
-    }
-  }
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -254,6 +354,11 @@ export function GameInterface({ story }: GameInterfaceProps) {
 
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                <Coins className="w-4 h-4 text-yellow-500" />
+                <span className="text-yellow-500 font-medium">{coins}</span>
+              </div>
+              
+              <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                 <Target className="w-4 h-4" />
                 <span>{discoveredPhrases.length}/{totalPhrases}</span>
               </div>
@@ -281,9 +386,9 @@ export function GameInterface({ story }: GameInterfaceProps) {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3">
+        <div className="grid grid-cols-1 lg:grid-cols-3 lg:divide-x lg:divide-border">
           {/* Main Game Area */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 lg:pr-4 ">
             {/* Story Context */}
             <div className="p-4">
               <div className="flex flex-col gap-2">
@@ -365,28 +470,59 @@ export function GameInterface({ story }: GameInterfaceProps) {
               {/* Input Area */}
               {!gameCompleted && (
                 <div className="p-4 border-t border-border">
+                  {coins === 0 && (
+                    <div className="mb-3 p-3 bg-red-900/20 border border-red-700 rounded-lg">
+                      <div className="flex items-center space-x-2">
+                        <Coins className="w-4 h-4 text-red-400" />
+                        <p className="text-sm text-red-300">
+                          Out of coins! You need to reveal phrases to earn more coins and continue playing.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                   <div className="flex space-x-3">
-                    <input
-                      ref={inputRef}
-                      type="text"
-                      value={currentAffirmation}
-                      onChange={(e) => setCurrentAffirmation(e.target.value)}
-                      onKeyPress={handleKeyPress}
-                      placeholder="Make an affirmation about the story..."
-                      className="flex-1 px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent pt-3"
-                      disabled={isSubmitting}
-                    />
+                    <div className="flex-1 relative">
+                      <input
+                        ref={inputRef}
+                        type="text"
+                        value={currentAffirmation}
+                        onChange={(e) => setCurrentAffirmation(e.target.value)}
+                        onKeyPress={handleKeyPress}
+                        placeholder="Make an affirmation about the story (at least 3 words)..."
+                        className="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent pt-3"
+                        disabled={isSubmitting}
+                        maxLength={50}
+                      />
+                      <div className={cn(
+                        "absolute right-3 top-2 text-xs",
+                        currentAffirmation.length >= 50 
+                          ? "text-red-400 font-medium" 
+                          : "text-muted-foreground"
+                      )}>
+                        {50 - currentAffirmation.length}
+                      </div>
+                      <div className={cn(
+                        "text-xs p-2",
+                        wordCount < 3
+                          ? "text-red-400 font-medium" 
+                          : "text-muted-foreground"
+                      )}>
+                        {wordCount}/3 word{wordCount !== 1 ? 's' : ''}
+                      </div>
+                    </div>
                     <button
                       onClick={submitAffirmation}
-                      disabled={!currentAffirmation.trim() || isSubmitting}
+                      disabled={!isValidStatement}
                       className={cn(
                         "px-4 py-2 rounded-lg font-medium transition-colors flex items-center space-x-2 text-center align-center",
-                        currentAffirmation.trim() && !isSubmitting
+                        isValidStatement
                           ? "bg-primary text-primary-foreground hover:bg-primary/90"
                           : "bg-muted text-muted-foreground cursor-not-allowed"
                       )}
                     >
-                      <span className="text-bottom self-center h-4 mt-1">{isSubmitting ? 'Thinking...' : 'Send'}</span>
+                      <span className="text-bottom self-center h-4 mt-1">
+                        {isSubmitting ? 'Thinking...' : coins < 1 ? 'No Coins' : 'Send'}
+                      </span>
                     </button>
                   </div>
                 </div>
@@ -442,20 +578,68 @@ export function GameInterface({ story }: GameInterfaceProps) {
             )}
           </div>
 
-          {/* Sidebar - Your Clues */}
-          <div className="space-y-6">
-            <div className="bg-card rounded-xl shadow-sm border border-border">
-              <div className="p-6 border-b border-border">
-                <div className="flex items-center space-x-2">
-                  <Lightbulb className="w-5 h-5 text-amber-600" />
-                  <h3 className="text-lg font-semibold text-foreground mt-1">Your Clues</h3>
-                </div>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Statements that got "Yes" responses
-                </p>
+          {/* Sidebar*/}
+          <div className="space-y-4 lg:pl-4">
+            {/* Economy Panel */}
+            <div className="p-2 space-y-2 text-sm border-b border-border">
+              <div className="flex items-center space-x-2">
+                <Coins className="w-4 h-4 text-yellow-500" />
+                <span className="text-md font-semibold text-foreground mt-1">Economy</span>
               </div>
               
-              <div className="p-6">
+              <div className="px-2 space-y-1 text-xs">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <MessageCircle className="w-3 h-3 text-muted-foreground" />
+                    <span className="text-muted-foreground">Each Statement</span>
+                  </div>
+                  <span className="flex gap-1 text-red-400 font-medium">-1<Coins className="w-3 h-3 text-yellow-500" /></span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Target className="w-3 h-3 text-muted-foreground" />
+                    <span className="text-muted-foreground">Phrase Revealed</span>
+                  </div>
+                  <span className="flex gap-1 text-green-400 font-medium">+3<Coins className="w-3 h-3 text-yellow-500" /></span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Lightbulb className="w-3 h-3 text-muted-foreground" />
+                    <span className="text-muted-foreground">Hint 1</span>
+                  </div>
+                  <span className="flex gap-1 text-red-400 font-medium">-1<Coins className="w-3 h-3 text-yellow-500" /></span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Lightbulb className="w-3 h-3 text-muted-foreground" />
+                    <span className="text-muted-foreground">Hint 2</span>
+                  </div>
+                  <span className="flex gap-1 text-red-400 font-medium">-2<Coins className="w-3 h-3 text-yellow-500" /></span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Lightbulb className="w-3 h-3 text-muted-foreground" />
+                    <span className="text-muted-foreground">Hint 3</span>
+                  </div>
+                  <span className="flex gap-1 text-red-400 font-medium">-3<Coins className="w-3 h-3 text-yellow-500" /></span>
+                </div>
+              </div>
+            </div>
+
+            <div className="border-b border-border">
+              <div className="p-2">
+                <div className="flex items-center space-x-2">
+                  <Lightbulb className="w-5 h-5 text-amber-600" />
+                  <h3 className="text-md font-semibold text-foreground mt-1">Your Clues</h3>
+                </div>
+
+              </div>
+              
+              <div className="p-2">
                 {yesAffirmations.length === 0 ? (
                   <div className="text-center py-8">
                     <Sparkles className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
@@ -465,22 +649,14 @@ export function GameInterface({ story }: GameInterfaceProps) {
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-1">
                     {yesAffirmations.map((clue, index) => (
                       <div 
                         key={index} 
-                        className={cn(
-                          "p-3 rounded-lg border transition-colors",
-                          clue.isUsed 
-                            ? "bg-muted border-border text-muted-foreground" 
-                            : "bg-green-900/20 border-green-700 text-green-300"
-                        )}
+                        className="px-2 text-green-300"
                       >
                         <div className="flex items-start space-x-2">
-                          <CheckCircle className={cn(
-                            "w-4 h-4 mt-0.5 flex-shrink-0",
-                            clue.isUsed ? "text-muted-foreground" : "text-green-400"
-                          )} />
+                          <CheckCircle className="w-4 h-4 mt-0.5 flex-shrink-0 text-green-400" />
                           <p className="text-sm">{clue.affirmation}</p>
                         </div>
                       </div>
@@ -491,31 +667,51 @@ export function GameInterface({ story }: GameInterfaceProps) {
             </div>
 
             {/* Story Hints */}
-            <div className="bg-card rounded-xl shadow-sm border border-border">
-              <div className="p-6 border-b border-border">
+            <div>
+              <div className="p-2">
                 <div className="flex items-center space-x-2">
-                  <h3 className="text-lg font-semibold text-foreground mt-1">Hints</h3>
+                  <ShieldQuestionIcon className="w-5 h-5 text-blue-500" />
+                  <h3 className="text-md font-semibold text-foreground mt-1">Hints</h3>
                 </div>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Subtle clues to guide your thinking. If you need.
-                </p>
               </div>
               
-              <div className="p-6">
-                <div className="space-y-3">
-                  {story.hints.map((hint, index) => (
-                    <div 
-                      key={index}
-                      className="p-3 bg-yellow-900/20 border border-yellow-700 rounded-lg"
-                    >
-                      <div className="flex items-start space-x-2">
-                        <span className="text-xs font-medium text-yellow-400 bg-yellow-900/30 px-2 py-1 rounded-full">
-                          {index + 1}
-                        </span>
-                        <p className="text-sm text-yellow-300 flex-1">{hint}</p>
+              <div className="p-2">
+                <div className="space-y-2">
+                  {story.hints.map((hint, index) => {
+                    const cost = index + 1
+                    const isUnlocked = hintsUnlocked.includes(index)
+                    const canAfford = coins >= cost
+                    
+                    return (
+                      <div key={index} className="p-2 transition-all">
+                        <div className="flex items-start space-x-2">
+                          <span className="text-sm font-medium px-2 rounded-full mt-1">
+                            Hint {index + 1}:
+                          </span>
+                          <div className="flex">
+                            {isUnlocked ? (
+                              <p className="text-sm text-blue-400 mt-1">{hint}</p>
+                            ) : (
+                              <div className="flex flex-col">
+                                <button
+                                  onClick={() => unlockHint(index)}
+                                  disabled={!canAfford}
+                                  className={cn(
+                                    "flex items-center px-2 rounded text-sm font-medium transition-colors",
+                                    canAfford
+                                      ? "bg-yellow-900/30"
+                                      : "bg-gray-600 text-gray-400 cursor-not-allowed"
+                                  )}
+                                >
+                                  <span className="mt-1 flex gap-1"> Unlock for {cost}<Coins className="w-3 h-3 text-yellow-400" /></span>
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </div>
             </div>

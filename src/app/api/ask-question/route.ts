@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { evaluateAffirmation } from '@/lib/gemini'
+import { evaluateAffirmation } from '@/lib/ai-service'
 import { AffirmationResponse } from '@/types'
 
 export async function POST(request: NextRequest) {
   try {
-    const { affirmation, storyId } = await request.json()
+    const { affirmation, storyId, sessionId } = await request.json()
 
     if (!affirmation || !storyId) {
       return NextResponse.json(
@@ -14,11 +14,41 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Validate affirmation length
+    if (affirmation.length > 50) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: `Statement too long! Please keep it under 50 characters. (Current: ${affirmation.length})` 
+        },
+        { status: 400 }
+      )
+    }
+
+    // Validate affirmation is not empty after trimming
+    if (!affirmation.trim()) {
+      return NextResponse.json(
+        { success: false, error: 'Statement cannot be empty' },
+        { status: 400 }
+      )
+    }
+
+    // Validate minimum word count
+    const wordCount = affirmation.trim().split(/\s+/).filter((word: string) => word.length > 0).length
+    if (wordCount < 3) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: `Please use at least 3 words in your statement. (Current: ${wordCount} word${wordCount !== 1 ? 's' : ''})` 
+        },
+        { status: 400 }
+      )
+    }
+
     // Get the story with phrases
     const story = await prisma.story.findUnique({
       where: { id: storyId },
       include: {
-        theme: true,
         phrases: {
           orderBy: { order: 'asc' }
         }
@@ -33,11 +63,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Evaluate the affirmation using AI with phrases
-    const evaluation = await evaluateAffirmation(affirmation, story.phrases)
+    const evaluation = await evaluateAffirmation(affirmation, story.phrases, story.context)
 
     let response: AffirmationResponse = {
       answer: evaluation.answer,
-      explanation: evaluation.explanation
+      explanation: evaluation.explanation,
+      isPartialMatch: evaluation.isPartialMatch,
+      coinsEarned: 0 // Default to 0, will be updated if phrase discovered
     }
 
     // Save the affirmation with its response
@@ -61,6 +93,9 @@ export async function POST(request: NextRequest) {
           order: matchedPhrase.order,
           text: matchedPhrase.text
         }
+
+        // Add coin reward for revealing a phrase
+        response.coinsEarned = 3
 
         // Mark related affirmations as used
         await prisma.playerAffirmation.updateMany({
