@@ -120,10 +120,11 @@ export function GameInterface({ story }: GameInterfaceProps) {
     inputRef.current?.focus()
   }, [])
 
-  // Initialize game session
+  // Initialize game session - create a new session on every page load
   useEffect(() => {
     const startSession = async () => {
       try {
+        // Always create a fresh session (no session reuse)
         const response = await fetch('/api/game-session', {
           method: 'POST',
           headers: {
@@ -132,6 +133,7 @@ export function GameInterface({ story }: GameInterfaceProps) {
           body: JSON.stringify({
             action: 'start',
             storyId: story.id,
+            forceNew: true, // Force creation of new session
           }),
         })
 
@@ -678,7 +680,7 @@ export function GameInterface({ story }: GameInterfaceProps) {
                 </div>
               )}
 
-              <div className="p-6 max-h-96 overflow-y-auto">
+              <div className="p-6 max-h-48 overflow-y-auto">
                 {affirmations.length === 0 ? (
                   <div className="text-center py-8">
                     <MessageCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />

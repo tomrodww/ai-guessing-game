@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 
 export async function POST(request: NextRequest) {
   try {
-    const { action, storyId, sessionId, hintIndex, coins, phraseId } = await request.json()
+    const { action, storyId, sessionId, hintIndex, coins, phraseId, forceNew } = await request.json()
 
     switch (action) {
       case 'start':
@@ -14,6 +14,7 @@ export async function POST(request: NextRequest) {
           )
         }
         
+        // Always create a new session (no session reuse for fresh games)
         const gameSession = await prisma.gameSession.create({
           data: {
             storyId,

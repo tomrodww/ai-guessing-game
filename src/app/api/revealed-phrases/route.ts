@@ -14,12 +14,26 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Get all affirmations for this session that revealed phrases
+    // Get the session to verify it exists
+    const session = await prisma.gameSession.findUnique({
+      where: { id: sessionId }
+    })
+
+    if (!session) {
+      return NextResponse.json(
+        { success: false, error: 'Session not found' },
+        { status: 404 }
+      )
+    }
+
+    // Get all affirmations that revealed phrases for this specific session
+    // We'll track this through the session's creation time
     const revealedAffirmations = await prisma.playerAffirmation.findMany({
       where: {
         storyId: storyId,
         response: 'Yes',
-        phraseId: { not: null }
+        phraseId: { not: null },
+        createdAt: { gte: session.startedAt } // Only affirmations after session started
       },
       select: {
         phraseId: true
