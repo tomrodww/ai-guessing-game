@@ -82,6 +82,7 @@ export function GameInterface({ story }: GameInterfaceProps) {
   const [gameStartTime] = useState(new Date())
   const [gameCompleted, setGameCompleted] = useState(false)
   const [discoveredPhrases, setDiscoveredPhrases] = useState<string[]>([])
+  const [revealedPhraseTexts, setRevealedPhraseTexts] = useState<Record<string, string>>({}) // Maps phrase ID to actual text
   const [coins, setCoins] = useState(7) // Starting coins
   const [hintsUnlocked, setHintsUnlocked] = useState<number[]>([]) // Unlocked hint indices
   const [sessionId, setSessionId] = useState<string | null>(null)
@@ -178,6 +179,34 @@ export function GameInterface({ story }: GameInterfaceProps) {
     fetchNavigation()
   }, [story.id])
 
+  // Fetch revealed phrases when session is available
+  useEffect(() => {
+    const fetchRevealedPhrases = async () => {
+      if (!sessionId) return
+
+      try {
+        const response = await fetch(`/api/revealed-phrases?sessionId=${sessionId}&storyId=${story.id}`)
+        if (response.ok) {
+          const result = await response.json()
+          if (result.success) {
+            const revealedTexts: Record<string, string> = {}
+            result.data.revealedPhrases.forEach((phrase: any) => {
+              revealedTexts[phrase.id] = phrase.text
+              if (!discoveredPhrases.includes(phrase.id)) {
+                setDiscoveredPhrases(prev => [...prev, phrase.id])
+              }
+            })
+            setRevealedPhraseTexts(revealedTexts)
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching revealed phrases:', error)
+      }
+    }
+
+    fetchRevealedPhrases()
+  }, [sessionId, story.id])
+
   const submitAffirmation = async () => {
     if (!currentAffirmation.trim() || isSubmitting) return
 
@@ -272,6 +301,12 @@ export function GameInterface({ story }: GameInterfaceProps) {
         if (data.phraseDiscovered) {
           setDiscoveredPhrases(prev => [...prev, data.phraseDiscovered!.id])
           
+          // Store the actual revealed phrase text securely
+          setRevealedPhraseTexts(prev => ({
+            ...prev,
+            [data.phraseDiscovered!.id]: data.phraseDiscovered!.text
+          }))
+          
           // Add coins for revealing a phrase (3 coins per phrase)
           if (data.coinsEarned) {
             setCoins(prev => prev + data.coinsEarned!)
@@ -324,6 +359,7 @@ export function GameInterface({ story }: GameInterfaceProps) {
     setAffirmations([])
     setYesAffirmations([])
     setDiscoveredPhrases([])
+    setRevealedPhraseTexts({}) // Clear revealed phrase texts
     setGameCompleted(false)
     setCurrentAffirmation('')
     setCoins(7) // Reset to starting coins
@@ -451,51 +487,52 @@ export function GameInterface({ story }: GameInterfaceProps) {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 h-8">
         {/* Navigation buttons */}
-        <div className="flex items-center space-x-2 justify-center">
-        {navigation?.previous ? (
-          <button
-            onClick={() => navigation.previous && handleNavigation(navigation.previous.id)}
-            disabled={isNavigating}
-            className="w-screen[1/2-20px] flex items-center space-x-1 px-2 py-1 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            title={`Previous: ${navigation.previous.title}`}
-          >
-
-            <ChevronLeft className={`w-4 h-4 ${isNavigating ? 'animate-pulse' : ''}`} />
-            <span className="hidden sm:inline">{navigation?.previous?.title || ''}  </span>
-          </button>
-        ) : (
-          <div className="flex items-center space-x-1 px-2 py-1 text-sm text-muted-foreground/50">
-            <ChevronLeft className="w-4 h-4" />
-            <span className="hidden sm:inline">Prev</span>
-          </div>
-        )}
-
-        <span className="text-xs text-muted-foreground px-2 w-10 text-center">
-          {navigation ? `${navigation.current.index}/${navigation.current.total}` : '...'}
-        </span>
-
-        {navigation?.next ? (
-          <button
-            onClick={() => navigation.next && handleNavigation(navigation.next.id)}
-            disabled={isNavigating}
-            className={cn(
-              "w-screen[1/2-20px] flex items-center space-x-1 px-2 py-1 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed",
-              isNavigating ? "animate-pulse" : ""
+        <div className="flex justify-between items-center w-full h-8">
+          {/* Left column - Previous */}
+          <div className="flex overflow-hidden">
+            {navigation?.previous ? (
+              <button
+                onClick={() => navigation.previous && handleNavigation(navigation.previous.id)}
+                disabled={isNavigating}
+                className="flex items-center space-x-1 px-2 py-1 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-w-0"
+                title={`Previous: ${navigation.previous.title}`}
+              >
+                <ChevronLeft className={`w-4 h-4 flex-shrink-0 ${isNavigating ? 'animate-pulse' : ''}`} />
+                <span className="hidden sm:inline truncate">{navigation.previous.title}</span>
+              </button>
+            ) : (
+              <div className="flex items-center space-x-1 px-2 py-1 text-sm text-muted-foreground/50">
+                <ChevronLeft className="w-4 h-4" />
+                <span className="hidden sm:inline">Prev</span>
+              </div>
             )}
-            title={`Next: ${navigation.next?.title || ''}`}
-          >
-            <span className="hidden sm:inline">{navigation?.next?.title || 'Next'}</span>
-            <ChevronRight className={`w-4 h-4 ${isNavigating ? 'animate-pulse' : ''}`} />
-          </button>
-        ) : (
-          <div className="flex items-center space-x-1 px-2 py-1 text-sm text-muted-foreground/50">
-            <span className="hidden sm:inline">Next</span>
-            <ChevronRight className="w-4 h-4" />
           </div>
-        )}
-      </div>
+
+          {/* Right column - Next */}
+          <div className="flex overflow-hidden h-8">
+            {navigation?.next ? (
+              <button
+                onClick={() => navigation.next && handleNavigation(navigation.next.id)}
+                disabled={isNavigating}
+                className={cn(
+                  "flex items-center space-x-1 px-2 py-1 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-w-0",
+                  isNavigating ? "animate-pulse" : ""
+                )}
+                title={`Next: ${navigation.next.title}`}
+              >
+                <span className="hidden sm:inline truncate">{navigation.next.title}</span>
+                <ChevronRight className={`w-4 h-4 flex-shrink-0 ${isNavigating ? 'animate-pulse' : ''}`} />
+              </button>
+            ) : (
+              <div className="flex items-center space-x-1 px-2 py-1 text-sm text-muted-foreground/50">
+                <span className="hidden sm:inline">Next</span>
+                <ChevronRight className="w-4 h-4" />
+              </div>
+            )}
+          </div>
+        </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 lg:divide-x lg:divide-border">
           {/* Main Game Area */}
           <div className="lg:col-span-2 lg:pr-4 ">
@@ -541,6 +578,7 @@ export function GameInterface({ story }: GameInterfaceProps) {
                           <div className="space-y-1">
                             {sortedPhrases.map((phrase) => {
                               const isDiscovered = discoveredPhrases.includes(phrase.id)
+                              const actualText = revealedPhraseTexts[phrase.id] || phrase.text
                               
                               if (isDiscovered) {
                                 return (
@@ -548,14 +586,15 @@ export function GameInterface({ story }: GameInterfaceProps) {
                                     key={phrase.id}
                                     className="text-green-200 px-1 py-0.5 rounded font-medium inline-block mr-1"
                                   >
-                                    {phrase.text}
+                                    {actualText}
                                   </span>
                                 )
                               } else {
                                 return (
                                   <span 
                                     key={phrase.id}
-                                    className="blur-sm text-muted-foreground select-none inline-block mr-1"
+                                    className="text-muted-foreground select-none inline-block mr-1 font-mono tracking-wide"
+                                    style={{ letterSpacing: '1px' }}
                                   >
                                     {phrase.text}
                                   </span>
