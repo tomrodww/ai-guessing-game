@@ -1,18 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-
-// In-memory storage for game sessions (temporary solution)
-// In production, this would be stored in the database
-const gameSessions = new Map<string, {
-  storyId: string
-  coins: number
-  hintsUnlocked: number[]
-  phrasesRevealed: number
-  startedAt: Date
-}>()
+import { prisma } from '@/lib/prisma'
 
 export async function POST(request: NextRequest) {
   try {
-    const { action, storyId, sessionId, hintIndex, coins } = await request.json()
+    const { action, storyId, sessionId, hintIndex, coins, phraseId } = await request.json()
 
     switch (action) {
       case 'start':
@@ -23,21 +14,21 @@ export async function POST(request: NextRequest) {
           )
         }
         
-        const newSessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-        gameSessions.set(newSessionId, {
-          storyId,
-          coins: 7,
-          hintsUnlocked: [],
-          phrasesRevealed: 0,
-          startedAt: new Date()
+        const gameSession = await prisma.gameSession.create({
+          data: {
+            storyId,
+            coins: 7,
+            hintsUnlocked: [],
+            phrasesRevealed: 0
+          }
         })
         
         return NextResponse.json({
           success: true,
           data: {
-            sessionId: newSessionId,
-            coins: 7,
-            hintsUnlocked: []
+            sessionId: gameSession.id,
+            coins: gameSession.coins,
+            hintsUnlocked: gameSession.hintsUnlocked
           }
         })
 
@@ -49,7 +40,10 @@ export async function POST(request: NextRequest) {
           )
         }
 
-        const session = gameSessions.get(sessionId)
+        const session = await prisma.gameSession.findUnique({
+          where: { id: sessionId }
+        })
+
         if (!session) {
           return NextResponse.json(
             { success: false, error: 'Session not found' },
@@ -72,14 +66,19 @@ export async function POST(request: NextRequest) {
           )
         }
 
-        session.coins -= cost
-        session.hintsUnlocked.push(hintIndex)
+        const updatedSession = await prisma.gameSession.update({
+          where: { id: sessionId },
+          data: {
+            coins: session.coins - cost,
+            hintsUnlocked: [...session.hintsUnlocked, hintIndex]
+          }
+        })
         
         return NextResponse.json({
           success: true,
           data: {
-            coins: session.coins,
-            hintsUnlocked: session.hintsUnlocked
+            coins: updatedSession.coins,
+            hintsUnlocked: updatedSession.hintsUnlocked
           }
         })
 
@@ -91,7 +90,10 @@ export async function POST(request: NextRequest) {
           )
         }
 
-        const updateSession = gameSessions.get(sessionId)
+        const updateSession = await prisma.gameSession.findUnique({
+          where: { id: sessionId }
+        })
+
         if (!updateSession) {
           return NextResponse.json(
             { success: false, error: 'Session not found' },
@@ -99,12 +101,51 @@ export async function POST(request: NextRequest) {
           )
         }
 
-        updateSession.coins = coins
+        const updated = await prisma.gameSession.update({
+          where: { id: sessionId },
+          data: { coins }
+        })
         
         return NextResponse.json({
           success: true,
           data: {
-            coins: updateSession.coins
+            coins: updated.coins
+          }
+        })
+
+      case 'reveal-phrase':
+        if (!sessionId || !phraseId) {
+          return NextResponse.json(
+            { success: false, error: 'Session ID and phrase ID required' },
+            { status: 400 }
+          )
+        }
+
+        const revealSession = await prisma.gameSession.findUnique({
+          where: { id: sessionId }
+        })
+
+        if (!revealSession) {
+          return NextResponse.json(
+            { success: false, error: 'Session not found' },
+            { status: 404 }
+          )
+        }
+
+        // Increment phrases revealed count and add coin reward
+        const revealUpdated = await prisma.gameSession.update({
+          where: { id: sessionId },
+          data: {
+            phrasesRevealed: revealSession.phrasesRevealed + 1,
+            coins: revealSession.coins + 3 // Reward 3 coins for phrase discovery
+          }
+        })
+        
+        return NextResponse.json({
+          success: true,
+          data: {
+            coins: revealUpdated.coins,
+            phrasesRevealed: revealUpdated.phrasesRevealed
           }
         })
 
@@ -139,7 +180,10 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const session = gameSessions.get(sessionId)
+    const session = await prisma.gameSession.findUnique({
+      where: { id: sessionId }
+    })
+
     if (!session) {
       return NextResponse.json(
         { success: false, error: 'Session not found' },

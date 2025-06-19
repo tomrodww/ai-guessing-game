@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { StoryWithDetails, AffirmationHistory, AffirmationResponse } from '@/types'
 import { getThemeColors, formatDuration, cn } from '@/lib/utils'
@@ -20,8 +21,13 @@ import {
   Eye,
   Rocket,
   Coins,
-  ShieldQuestionIcon
+  ShieldQuestionIcon,
+  X,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react'
+
+
 
 interface GameInterfaceProps {
   story: StoryWithDetails
@@ -33,6 +39,23 @@ interface PlayerAffirmation {
   timestamp: Date
   explanation?: string
   phraseId?: string
+}
+
+interface StoryNavigation {
+  previous: {
+    id: string
+    title: string
+    themeName: string
+  } | null
+  next: {
+    id: string
+    title: string
+    themeName: string
+  } | null
+  current: {
+    index: number
+    total: number
+  }
 }
 
 // Custom icon component that handles the map.svg for adventure themes
@@ -62,15 +85,20 @@ export function GameInterface({ story }: GameInterfaceProps) {
   const [coins, setCoins] = useState(7) // Starting coins
   const [hintsUnlocked, setHintsUnlocked] = useState<number[]>([]) // Unlocked hint indices
   const [sessionId, setSessionId] = useState<string | null>(null)
+  const [currentTime, setCurrentTime] = useState(new Date()) // For real-time timer
+  const [showCompletionDialog, setShowCompletionDialog] = useState(false)
+  const [navigation, setNavigation] = useState<StoryNavigation | null>(null)
+  const [isNavigating, setIsNavigating] = useState(false)
   
   const chatEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const router = useRouter()
 
   const totalPhrases = story.phrases.length
   const IconComponent = getThemeIcon(story.theme.icon)
   const colors = getThemeColors(story.theme.color)
   const difficultyName = getDifficultyName(totalPhrases)
-  const progress = Math.round((discoveredPhrases.length / totalPhrases) * 100)
+  const progress = Math.min(100, Math.round((discoveredPhrases.length / totalPhrases) * 100))
   
   // Calculate word count for validation
   const wordCount = currentAffirmation.trim().split(/\s+/).filter(word => word.length > 0).length
@@ -118,6 +146,36 @@ export function GameInterface({ story }: GameInterfaceProps) {
     }
 
     startSession()
+  }, [story.id])
+
+  // Real-time timer update
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (!gameCompleted) {
+        setCurrentTime(new Date())
+      }
+    }, 1000) // Update every second
+
+    return () => clearInterval(timer)
+  }, [gameCompleted])
+
+  // Fetch navigation data
+  useEffect(() => {
+    const fetchNavigation = async () => {
+      try {
+        const response = await fetch(`/api/story-navigation?storyId=${story.id}`)
+        if (response.ok) {
+          const result = await response.json()
+          if (result.success) {
+            setNavigation(result.data)
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching navigation data:', error)
+      }
+    }
+
+    fetchNavigation()
   }, [story.id])
 
   const submitAffirmation = async () => {
@@ -223,6 +281,7 @@ export function GameInterface({ story }: GameInterfaceProps) {
         // Handle story completion
         if (data.storyCompleted) {
           setGameCompleted(true)
+          setShowCompletionDialog(true)
         }
 
       } else {
@@ -269,6 +328,7 @@ export function GameInterface({ story }: GameInterfaceProps) {
     setCurrentAffirmation('')
     setCoins(7) // Reset to starting coins
     setHintsUnlocked([]) // Reset unlocked hints
+    setShowCompletionDialog(false) // Close dialog if open
     inputRef.current?.focus()
   }
 
@@ -323,7 +383,11 @@ export function GameInterface({ story }: GameInterfaceProps) {
     }
   }
 
-
+  // Navigation handlers
+  const handleNavigation = async (storyId: string) => {
+    setIsNavigating(true)
+    router.push(`/story/${storyId}`)
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -352,20 +416,22 @@ export function GameInterface({ story }: GameInterfaceProps) {
               </div>
             </div>
 
+
+            {/* Game stats */}
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                 <Coins className="w-4 h-4 text-yellow-500" />
-                <span className="text-yellow-500 font-medium">{coins}</span>
+                <span className="text-yellow-500 font-medium mt-1">{coins}</span>
               </div>
               
               <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                <Target className="w-4 h-4" />
-                <span>{discoveredPhrases.length}/{totalPhrases}</span>
+                <Target className="w-4 h-4 text-green-500" />
+                <span className="mt-1">{discoveredPhrases.length}/{totalPhrases}</span>
               </div>
               
               <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                <Clock className="w-4 h-4" />
-                <span>{formatDuration(gameStartTime, gameCompleted ? new Date() : undefined)}</span>
+                <Clock className="w-4 h-4 text-blue-500" />
+                <span className="mt-1">{formatDuration(gameStartTime, gameCompleted ? new Date() : currentTime)}</span>
               </div>
 
               {gameCompleted && (
@@ -385,15 +451,59 @@ export function GameInterface({ story }: GameInterfaceProps) {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
+        {/* Navigation buttons */}
+        <div className="flex items-center space-x-2 justify-center">
+        {navigation?.previous ? (
+          <button
+            onClick={() => navigation.previous && handleNavigation(navigation.previous.id)}
+            disabled={isNavigating}
+            className="w-screen[1/2-20px] flex items-center space-x-1 px-2 py-1 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title={`Previous: ${navigation.previous.title}`}
+          >
+
+            <ChevronLeft className={`w-4 h-4 ${isNavigating ? 'animate-pulse' : ''}`} />
+            <span className="hidden sm:inline">{navigation?.previous?.title || ''}  </span>
+          </button>
+        ) : (
+          <div className="flex items-center space-x-1 px-2 py-1 text-sm text-muted-foreground/50">
+            <ChevronLeft className="w-4 h-4" />
+            <span className="hidden sm:inline">Prev</span>
+          </div>
+        )}
+
+        <span className="text-xs text-muted-foreground px-2 w-10 text-center">
+          {navigation ? `${navigation.current.index}/${navigation.current.total}` : '...'}
+        </span>
+
+        {navigation?.next ? (
+          <button
+            onClick={() => navigation.next && handleNavigation(navigation.next.id)}
+            disabled={isNavigating}
+            className={cn(
+              "w-screen[1/2-20px] flex items-center space-x-1 px-2 py-1 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed",
+              isNavigating ? "animate-pulse" : ""
+            )}
+            title={`Next: ${navigation.next?.title || ''}`}
+          >
+            <span className="hidden sm:inline">{navigation?.next?.title || 'Next'}</span>
+            <ChevronRight className={`w-4 h-4 ${isNavigating ? 'animate-pulse' : ''}`} />
+          </button>
+        ) : (
+          <div className="flex items-center space-x-1 px-2 py-1 text-sm text-muted-foreground/50">
+            <span className="hidden sm:inline">Next</span>
+            <ChevronRight className="w-4 h-4" />
+          </div>
+        )}
+      </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 lg:divide-x lg:divide-border">
           {/* Main Game Area */}
           <div className="lg:col-span-2 lg:pr-4 ">
             {/* Story Context */}
-            <div className="p-4">
+            <div className="px-4 py-2">
               <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-2 h-8">
-                  <BookOpen className="w-6 h-6 text-blue-800" />
+                  <BookOpen className="w-5 h-5 text-blue-800" />
                   <h2 className="text-lg font-semibold text-foreground mt-1">Context</h2>
                 </div>
                 <p className="text-muted-foreground leading-relaxed px-2">{story.context}</p>
@@ -412,15 +522,15 @@ export function GameInterface({ story }: GameInterfaceProps) {
             </div>
 
             {/* Story Reveal */}
-            <div className="">
-              <div className="p-4 border-b border-border">
-                <div className="flex items-center space-x-2">
+            <div className="border-b border-border">
+              <div className="px-4 py-2">
+                <div className="flex items-center gap-2">
                   <Target className="w-5 h-5 text-green-600" />
                   <h3 className="text-lg font-semibold text-foreground mt-1">Story</h3>
                 </div>
               </div>
               
-              <div className="p-6">
+              <div className="px-6 py-2">
                 <div className="space-y-4">
                                     <div className="prose prose-sm max-w-none">
                     <div className="leading-relaxed text-foreground">
@@ -463,17 +573,17 @@ export function GameInterface({ story }: GameInterfaceProps) {
 
             {/* Chat Interface */}
             <div className="">
-              <div className="p-4 border-b border-border">
+              <div className="p-4">
                 <h3 className="text-lg font-semibold text-foreground">Make Your statement</h3>
               </div>
 
               {/* Input Area */}
               {!gameCompleted && (
-                <div className="p-4 border-t border-border">
+                <div className="px-4">
                   {coins === 0 && (
                     <div className="mb-3 p-3 bg-red-900/20 border border-red-700 rounded-lg">
                       <div className="flex items-center space-x-2">
-                        <Coins className="w-4 h-4 text-red-400" />
+                        <Coins className="w-4 h-4" />
                         <p className="text-sm text-red-300">
                           Out of coins! You need to reveal phrases to earn more coins and continue playing.
                         </p>
@@ -492,9 +602,10 @@ export function GameInterface({ story }: GameInterfaceProps) {
                         className="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent pt-3"
                         disabled={isSubmitting}
                         maxLength={50}
-                      />
+                      >
+                      </input>
                       <div className={cn(
-                        "absolute right-3 top-2 text-xs",
+                        "absolute right-3 top-3 text-xs",
                         currentAffirmation.length >= 50 
                           ? "text-red-400 font-medium" 
                           : "text-muted-foreground"
@@ -514,7 +625,7 @@ export function GameInterface({ story }: GameInterfaceProps) {
                       onClick={submitAffirmation}
                       disabled={!isValidStatement}
                       className={cn(
-                        "px-4 py-2 rounded-lg font-medium transition-colors flex items-center space-x-2 text-center align-center",
+                        " h-10 w-32 rounded-lg font-medium transition-colors flex items-center justify-center text-center align-center",
                         isValidStatement
                           ? "bg-primary text-primary-foreground hover:bg-primary/90"
                           : "bg-muted text-muted-foreground cursor-not-allowed"
@@ -561,17 +672,51 @@ export function GameInterface({ story }: GameInterfaceProps) {
 
             </div>
 
-            {/* Completion Message */}
-            {gameCompleted && (
-              <div className="bg-green-900/20 border border-green-700 rounded-xl p-6">
-                <div className="flex items-center space-x-3">
-                  <Trophy className="w-8 h-8 text-green-400" />
-                  <div>
-                    <h3 className="text-lg font-semibold text-green-300">Congratulations!</h3>
-                    <p className="text-green-400">
-                      You've discovered all the phrases in the story! You completed it in{' '}
-                      {formatDuration(gameStartTime, new Date())} with {affirmations.length} affirmations.
-                    </p>
+            {/* Completion Dialog */}
+            {showCompletionDialog && (
+              <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+                <div className="relative bg-background border border-border rounded-xl p-6 max-w-md w-full">
+                  <button
+                    onClick={() => setShowCompletionDialog(false)}
+                    className="absolute top-3 right-3 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-3 justify-center w-full">
+                      <Trophy className="w-8 h-8 text-green-400" />
+                      <h3 className="text-xl font-medium text-green-400 mt-2">Congratulations!</h3>
+                    </div>
+                  </div>
+                  
+                  <p className="text-muted-foreground mb-6 px-2 text-center">
+                    You've discovered all the phrases in the story! You completed it in{' '}
+                    {formatDuration(gameStartTime, new Date())} with {affirmations.length} affirmations.
+                  </p>
+
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    {navigation?.next ? (
+                      <button
+                        onClick={() => navigation.next && handleNavigation(navigation.next.id)}
+                        disabled={isNavigating}
+                        className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
+                      >
+                        {isNavigating ? 'Loading...' : `Next: ${navigation.next?.title || ''}`}
+                      </button>
+                    ) : (
+                      <Link
+                        href="/"
+                        className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-lg font-medium transition-colors text-center"
+                      >
+                        Back to Stories
+                      </Link>
+                    )}
+                    <button
+                      onClick={() => setShowCompletionDialog(false)}
+                      className="flex-1 bg-muted text-muted-foreground hover:bg-muted/80 px-4 py-2 rounded-lg font-medium transition-colors"
+                    >
+                      Close
+                    </button>
                   </div>
                 </div>
               </div>
@@ -584,10 +729,10 @@ export function GameInterface({ story }: GameInterfaceProps) {
             <div className="p-2 space-y-2 text-sm border-b border-border">
               <div className="flex items-center space-x-2">
                 <Coins className="w-4 h-4 text-yellow-500" />
-                <span className="text-md font-semibold text-foreground mt-1">Economy</span>
+                <span className="text-lg font-semibold text-foreground mt-1">Economy</span>
               </div>
               
-              <div className="px-2 space-y-1 text-xs">
+              <div className="px-2 space-y-1 text-sm">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <MessageCircle className="w-3 h-3 text-muted-foreground" />
@@ -703,7 +848,7 @@ export function GameInterface({ story }: GameInterfaceProps) {
                                       : "bg-gray-600 text-gray-400 cursor-not-allowed"
                                   )}
                                 >
-                                  <span className="mt-1 flex gap-1"> Unlock for {cost}<Coins className="w-3 h-3 text-yellow-400" /></span>
+                                  <span className="mt-1 flex gap-1"> Unlock for {cost}<Coins className="w-3 h-3 text-yellow-500 mt-0.5" /></span>
                                 </button>
                               </div>
                             )}

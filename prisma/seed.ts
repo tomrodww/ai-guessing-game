@@ -156,7 +156,7 @@ async function main() {
           ]
         },
         {
-          title: 'Ice',
+          title: 'Adam',
           context: 'An adventurer sees two bodies preserved in an iceberg. He gets closer and shouts, "It\'s Adam & Eve!". Why?',
           hints: ['Anatomical', 'Birth', 'Unaltered'],
           themeId: mysteryTheme.id,

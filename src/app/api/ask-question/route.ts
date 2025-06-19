@@ -94,24 +94,69 @@ export async function POST(request: NextRequest) {
           text: matchedPhrase.text
         }
 
-        // Add coin reward for revealing a phrase
-        response.coinsEarned = 3
+        // Update game session to track phrase revealed and add coins
+        if (sessionId) {
+          try {
+            const sessionResponse = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/game-session`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                action: 'reveal-phrase',
+                sessionId,
+                phraseId: matchedPhrase.id,
+              }),
+            })
+
+            if (sessionResponse.ok) {
+              const sessionResult = await sessionResponse.json()
+              if (sessionResult.success) {
+                response.coinsEarned = 3 // This matches the coins added in the session
+              }
+            }
+          } catch (error) {
+            console.error('Error updating game session for phrase reveal:', error)
+            // Still give coins even if session update fails
+            response.coinsEarned = 3
+          }
+        } else {
+          // Fallback if no session
+          response.coinsEarned = 3
+        }
 
         // No need to mark affirmations as used since we removed that functionality
 
-        // Check if all phrases are discovered (story completed)
-        const discoveredPhrases = await prisma.playerAffirmation.findMany({
-          where: {
-            storyId: story.id,
-            response: 'Yes',
-            phraseId: { not: null }
-          },
-          select: { phraseId: true },
-          distinct: ['phraseId']
-        })
+        // Check if all phrases are discovered in current session (story completed)
+        if (sessionId) {
+          // Get the game session to check phrases revealed in this session
+          const gameSession = await prisma.gameSession.findUnique({
+            where: { id: sessionId }
+          })
 
-        if (discoveredPhrases.length >= story.phrases.length) {
-          response.storyCompleted = true
+          if (gameSession) {
+            // Check unique phrases revealed in this session
+            const sessionPhrasesRevealed = gameSession.phrasesRevealed
+            
+            if (sessionPhrasesRevealed >= story.phrases.length) {
+              response.storyCompleted = true
+            }
+          }
+        } else {
+          // Fallback to old behavior if no session (shouldn't happen in normal flow)
+          const discoveredPhrases = await prisma.playerAffirmation.findMany({
+            where: {
+              storyId: story.id,
+              response: 'Yes',
+              phraseId: { not: null }
+            },
+            select: { phraseId: true },
+            distinct: ['phraseId']
+          })
+
+          if (discoveredPhrases.length >= story.phrases.length) {
+            response.storyCompleted = true
+          }
         }
       }
     }
