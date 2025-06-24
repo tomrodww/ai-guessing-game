@@ -42,12 +42,11 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const resolvedSearchParams = await searchParams
   
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen h-full bg-background-black overflow-y-auto">
       <Header />
-      
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8 h-full">
         {/* Hero Section */}
-        <section className="text-center mb-12">
+        <section id="hero" className="text-center mb-12">
           <div className="max-w-4xl mx-auto">
             <h1 className="text-2xl font-bold text-foreground mb-6">
               <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">Make your statement. Find the truth<span className='text-blue-800'>.</span></span>
@@ -59,7 +58,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         </section>
 
         {/* Story Selection */}
-        <section>
+        <section id="stories">
           <div className="max-w-7xl mx-auto">
             <Suspense fallback={<LoadingSpinner />}>
               <StorySelection searchParams={resolvedSearchParams} />
