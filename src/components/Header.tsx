@@ -14,7 +14,7 @@ export function Header() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 group">
-            <Image src="/wha-happen-dark.svg" alt="WhaHappen?" width={200} height={200} className='mt-2'/>
+            <Image src="/wha-happen-dark.svg" alt="WhaHappen?" width={160} height={160} className='mt-2'/>
           </Link>
 
           {/* Navigation */}

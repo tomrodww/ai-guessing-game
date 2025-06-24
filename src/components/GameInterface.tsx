@@ -428,23 +428,20 @@ export function GameInterface({ story }: GameInterfaceProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="container mx-auto min-h-screen bg-background w-screen">
       {/* Header */}
-      <div className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur-sm">
+      <div className="container mx-auto sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-4">
-              <Link 
-                href="/" 
-                className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5" />
-                <span className="mt-1">Back</span>
+              {/* Logo */}
+              <Link href="/" className="flex items-center gap-3 group">
+                <Image src="/wha-happen-dark.svg" alt="WhaHappen?" width={160} height={160} className='mt-2'/>
               </Link>
               
               <div className="h-6 w-px bg-border" />
               
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-3 max-md:hidden">
                 <div className="p-2 rounded-lg">
                   <IconComponent className="w-5 h-5" />
                 </div>
@@ -456,18 +453,18 @@ export function GameInterface({ story }: GameInterfaceProps) {
 
 
             {/* Game stats */}
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-4 max-md:text-xs text-sm">
               <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                 <Coins className="w-4 h-4 text-yellow-500" />
                 <span className="text-yellow-500 font-medium mt-1">{coins}</span>
               </div>
               
-              <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+              <div className="flex items-center space-x-2 text-sm text-muted-foreground ">
                 <Target className="w-4 h-4 text-green-500" />
                 <span className="mt-1">{discoveredPhrases.length}/{totalPhrases}</span>
               </div>
               
-              <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+              <div className="flex items-center space-x-2 text-sm text-muted-foreground w-20">
                 <Clock className="w-4 h-4 text-blue-500" />
                 <span className="mt-1">{formatDuration(gameStartTime, gameCompleted ? new Date() : currentTime)}</span>
               </div>
@@ -627,7 +624,7 @@ export function GameInterface({ story }: GameInterfaceProps) {
                       <div className="flex items-center space-x-2">
                         <Coins className="w-4 h-4" />
                         <p className="text-sm text-red-300">
-                          Out of coins! You need to reveal phrases to earn more coins and continue playing.
+                          Out of coins! Refresh the page to start a new game.
                         </p>
                       </div>
                     </div>
@@ -641,7 +638,7 @@ export function GameInterface({ story }: GameInterfaceProps) {
                         onChange={(e) => setCurrentAffirmation(e.target.value)}
                         onKeyPress={handleKeyPress}
                         placeholder="Make an affirmation about the story (at least 3 words)..."
-                        className="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent pt-3"
+                        className="w-full px-4 pr-8 py-2 border border-border rounded-lg bg-background text-sm max-lg:text-xs text-foreground focus:ring-2 focus:ring-primary focus:border-transparent pt-3 "
                         disabled={isSubmitting}
                         maxLength={50}
                       >

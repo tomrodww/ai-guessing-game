@@ -42,11 +42,7 @@ export function StoryFilters({
   const hasFilters = selectedTheme || selectedDifficulty
 
   return (
-    <div className='flex flex-row gap-2 justify-between'>
-      <div className="flex items-center gap-2">
-        <Filter className="h-5 w-5" />
-        <span className='text-sm font-medium'>Filters</span>
-      </div>
+    <div className='flex flex-row gap-2 justify-between max-md:flex-col max-md:items-center'>
 
       {/* Difficulty Filter */}
       <div className="flex items-center gap-1">
