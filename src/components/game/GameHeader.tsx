@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { ArrowLeft, Coins, Target, Clock, RotateCcw } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { getDifficultyColors } from '@/lib/difficulty'
+import { DIFFICULTY_LEVELS } from '@/lib/difficulty'
 
 interface GameHeaderProps {
   story: {
@@ -35,9 +35,9 @@ export function GameHeader({
   gameCompleted,
   onReset
 }: GameHeaderProps) {
-  const colors = getDifficultyColors(totalPhrases)
   const IconComponent = getThemeIcon(story.theme.icon)
-  const difficultyName = totalPhrases <= 5 ? 'Easy' : totalPhrases <= 10 ? 'Medium' : 'Hard'
+  const difficultyLevel = DIFFICULTY_LEVELS.find(level => totalPhrases >= level.minPhrases && totalPhrases <= level.maxPhrases)
+  const difficultyName = difficultyLevel?.label || 'Unknown'
 
   return (
     <div className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur-sm">
@@ -89,7 +89,7 @@ export function GameHeader({
                 onClick={onReset}
                 className={cn(
                   "flex items-center space-x-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
-                  colors.bg, colors.text, "hover:opacity-80"
+                  "hover:opacity-80"
                 )}
               >
                 <RotateCcw className="w-4 h-4" />
