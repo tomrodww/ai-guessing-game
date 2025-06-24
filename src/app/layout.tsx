@@ -77,8 +77,8 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/logo-icon.svg" />
         
       </head>
-      <body className="antialiased" style={{ fontFamily: "'Special Elite', monospace" }}>
-        <div className="min-h-screen bg-background text-foreground">
+      <body className="antialiased h-full" style={{ fontFamily: "'Special Elite', monospace" }}>
+        <div className="min-h-screen bg-background-black text-foreground h-full">
           {children}
         </div>
       </body>

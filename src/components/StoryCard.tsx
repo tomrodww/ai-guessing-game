@@ -48,7 +48,7 @@ export function StoryCard({ story }: StoryCardProps) {
   const difficultyName = getDifficultyName(phraseCount)
 
   return (
-    <Card className="group hover:shadow-lg transition-all duration-300 cursor-pointer">
+    <Card className="group hover:shadow-lg transition-all duration-300 cursor-pointer h-full">
       <CardContent className="p-0">
         {/* Story Image */}
         <div className="relative h-8 rounded-t-lg overflow-hidden bg-gradient-to-br from-muted to-muted/50">

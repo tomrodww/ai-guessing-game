@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Menu } from 'lucide-react'
+import { Home } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import Image from 'next/image'
 
@@ -19,15 +19,34 @@ export function Header() {
 
           {/* Navigation */}
           <div className="flex items-center gap-4">
-            
-            <Link href="/" className="flex items-center gap-2 align-baseline justify-baseline mb-0 py-2 hover:scale-105 transition-all duration-300">
-              <span className='text-medium font-medium align-baseline justify-baseline'>Home</span>
-            </Link>
-            {/* Mobile Navigation */}
-            <div className="md:hidden">
-              <Button variant="ghost" size="icon">
-                <Menu className="h-5 w-5" />
+            {/* Donation Dropdown */}
+            <div className="relative group">
+              <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                <span className="text-sm">Support this project</span>
               </Button>
+              
+              {/* Dropdown Content */}
+              <div className="absolute right-0 top-full mt-2 bg-background border border-border rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                <div className="p-4">
+                  <h3 className="text-sm font-semibold text-foreground mb-2">Help us improve and maintain this game by donating Solana</h3>   
+                  <div className="space-y-2">
+                    <label className="text-xs text-muted-foreground text-wrap max-w-60">Solana Wallet Address: <span className='text-xs'>5PTBDWFaFDrFmtiSayNEg34ga6PKfX9PbSGz1XFQDiaD</span></label>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText('5PTBDWFaFDrFmtiSayNEg34ga6PKfX9PbSGz1XFQDiaD')
+                        // You could add a toast notification here
+                      }}
+                      className="w-full p-2 bg-muted border border-border rounded text-xs font-mono text-foreground hover:bg-muted/80 transition-colors break-all"
+                      title="Click to copy wallet address"
+                    >
+                      Copy Wallet Address
+                    </button>
+                    <p className="text-xs text-muted-foreground">
+                      Any amount appreciated 🙏
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

@@ -99,8 +99,9 @@ export default async function StoryPage({ params }: StoryPageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="min-h-screen bg-background-black">
       <GameInterface story={secureStory} />
+      <div id="ads" className="max-w-60 w-full h-full"></div>
     </div>
   )
 } 

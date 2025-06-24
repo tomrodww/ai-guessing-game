@@ -176,7 +176,7 @@ async function main() {
             'He was proud of his title.',
             'His rival was the second smallest dwarf.',
             'The rival was intensely jealous.',
-            'The rival secretly sawed off his cane\'s end.',
+            'The rival secretly sawed off the end of his cane.',
             'The next day, he used his shortened cane.',
             'He felt taller than usual.',
             'He believed he had grown.',
@@ -207,7 +207,7 @@ async function main() {
           themeId: mysteryTheme.id,
           phrases: [
             'He was studying a rare medieval book.',
-            'The book\'s pages were preserved with mercury.',
+            'The pages of the book were preserved with mercury.',
             'Over centuries, the preservative became toxic.',
             'Turning pages made mercury particles airborne.',
             'The sealed room had no ventilation.',
@@ -247,27 +247,29 @@ async function main() {
         },
         {
           title: 'Light Flicker',
-          context: 'A man runs down a hallway with a piece of paper. The lights flicker. He immediately turns around and walks away slowly. Why?',
-          hints: ['Professional', 'Paper', 'Event'],
+          context: 'A man runs down a hallway. The lights flicker. He immediately turns around and walks away slowly. Why?',
+          hints: ['Professional', 'carrying', 'Event'],
           themeId: mysteryTheme.id,
           phrases: [
-            'The man was a lawyer in a prison.',
+            'The man was a lawyer.',
+            'He was in a prison.',
+            'He was carrying a suitcase.',
             'He was rushing to deliver a document.',
             'The document would cancel an execution.',
             'The execution was by electric chair.',
             'An electric chair causes a power surge.',
-            'The flickering lights signaled the execution.',
+            'The flickering lights signaled the execution was done.',
             'He knew he was too late.'
           ]
         },
         {
           title: 'Pheasant',
-          context: 'A couple orders pheasant at a restaurant. The man takes one bite and faints. Why?',
+          context: 'A man orders pheasant at a restaurant. He takes one bite, gets out of restaurant and kills himself. Why?',
           hints: ['Traumatic', 'Fooled', 'Meat'],
           themeId: mysteryTheme.id,
           phrases: [
             'The man was a shipwreck survivor.',
-            'On the island, his wife disappeared.',
+            'His wife disappeared on the island.',
             'Other survivors returned with strange meat.',
             'They claimed it was pheasant.',
             'He ate the meat they brought.',
@@ -324,13 +326,14 @@ async function main() {
         {
           title: 'Watchman',
           context: 'A watchman tells his boss: "Boss, don\'t take your usual road home." The next day, the boss fires him. Why?',
-          hints: ['Words', 'Job', 'Irrelevant'],
+          hints: ['Words', 'Job', 'Dream'],
           themeId: mysteryTheme.id,
           phrases: [
             'He is a night watchman.',
-            'Last night the watchman dreamt of a landslide.',
+            'Last night the watchman had a dream.',
+            'He dreamt of a landslide on the road.',
             'The road the boss takes home was the one in the dream.',
-            'He implicitly confessed to sleeping on the job.',
+            'He confessed to sleeping on the job.',
             'He was fired for neglecting his duty.'
           ]
         },
@@ -341,9 +344,8 @@ async function main() {
           themeId: mysteryTheme.id,
           phrases: [
             'The man was a lighthouse keeper.',
-            'He irresponsibly turned off the beacon.',
+            'He turned off the beacon.',
             'The TV news reported a shipwreck.',
-            'The ship crashed on nearby reefs.',
             'He realized the accident was his fault.',
             'Consumed by guilt, he took his life.'
           ]
@@ -358,7 +360,6 @@ async function main() {
             'He believed he was the last human alive.',
             'He was overwhelmed by loneliness.',
             'The ringing phone meant someone else survived.',
-            'He was no longer alone.'
           ]
         },
         {
@@ -389,7 +390,7 @@ async function main() {
             'She answered again in a towel.',
             'A third knock came.',
             'Assuming it was the blind man, she answered naked.',
-            'It was the formerly blind man.',
+            'It was the blind man.',
             'He announced his sight was just restored.'
           ]
         }
