@@ -21,14 +21,10 @@ export async function GET(request: NextRequest) {
       select: {
         id: true,
         title: true,
-        theme: {
-          select: {
-            name: true
-          }
-        }
+        theme: true
       },
       orderBy: [
-        { theme: { name: 'asc' } },
+        { theme: 'asc' },
         { title: 'asc' }
       ]
     })
@@ -53,12 +49,12 @@ export async function GET(request: NextRequest) {
         previous: previousStory ? {
           id: previousStory.id,
           title: previousStory.title,
-          themeName: previousStory.theme.name
+          themeName: previousStory.theme
         } : null,
         next: nextStory ? {
           id: nextStory.id,
           title: nextStory.title,
-          themeName: nextStory.theme.name
+          themeName: nextStory.theme
         } : null,
         current: {
           index: currentIndex + 1,

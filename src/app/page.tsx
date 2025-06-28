@@ -73,10 +73,15 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 async function StorySelection({ searchParams }: { searchParams: { theme?: string; difficulty?: string } }) {
   const resolvedSearchParams = searchParams
   
-  // Fetch themes for filtering
-  const themes = await prisma.theme.findMany({
-    orderBy: { name: 'asc' }
+  // Get unique themes from stories
+  const uniqueThemes = await prisma.story.findMany({
+    where: { isActive: true },
+    select: { theme: true },
+    distinct: ['theme'],
+    orderBy: { theme: 'asc' }
   })
+  
+  const themes = uniqueThemes.map(story => story.theme)
 
   // Build where clause for filtering
   const where: any = {
@@ -84,14 +89,13 @@ async function StorySelection({ searchParams }: { searchParams: { theme?: string
   }
 
   if (resolvedSearchParams.theme) {
-    where.themeId = resolvedSearchParams.theme
+    where.theme = resolvedSearchParams.theme
   }
 
   // Fetch stories (we'll filter by difficulty on the client side)
   let stories = await prisma.story.findMany({
     where,
     include: {
-      theme: true,
       phrases: {
         select: {
           id: true
@@ -99,7 +103,7 @@ async function StorySelection({ searchParams }: { searchParams: { theme?: string
       }
     },
     orderBy: [
-      { theme: { name: 'asc' } },
+      { theme: 'asc' },
       { title: 'asc' }
     ]
   })

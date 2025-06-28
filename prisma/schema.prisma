@@ -11,32 +11,17 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-model Theme {
-  id          String   @id @default(cuid())
-  name        String   @unique
-  description String?
-  color       String // Tailwind color class
-  icon        String // Lucide icon name
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  stories Story[]
-
-  @@map("themes")
-}
-
 model Story {
   id        String   @id @default(cuid())
   title     String
   context   String // The hint/context that sets up the mystery
   hints     String[] // Array of 3 hints for the story
-  themeId   String
+  theme     String // Theme as a simple string value
   imageUrl  String?
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  theme              Theme               @relation(fields: [themeId], references: [id], onDelete: Cascade)
   phrases            StoryPhrase[] // The phrases that make up the complete story
   playerAffirmations PlayerAffirmation[]
   gameSessions       GameSession[]
@@ -71,7 +56,7 @@ model PlayerAffirmation {
 }
 
 model GameSession {
-  id              String    @id @default(cuid())
+  id              String    @id @default(uuid())
   storyId         String
   coins           Int       @default(7) // Starting coins
   hintsUnlocked   Int[]     @default([]) // Array of hint indices that have been unlocked (0, 1, 2)

@@ -58,17 +58,31 @@ interface StoryNavigation {
   }
 }
 
-// Custom icon component that handles the map.svg for adventure themes
-const getThemeIcon = (iconName: string) => {
-  switch (iconName) {
-    case 'Eye':
+// Theme to icon mapping
+const getThemeIcon = (theme: string) => {
+  switch (theme) {
+    case 'Mystery':
       return Eye
-    case 'Rocket':
+    case 'Sci-Fi':
       return Rocket
-    case 'Map':
+    case 'Adventure':
       return () => <Image src="/map.svg" alt="Adventure" width={20} height={20} />
     default:
       return Eye
+  }
+}
+
+// Theme to color mapping
+const getThemeColor = (theme: string) => {
+  switch (theme) {
+    case 'Mystery':
+      return 'purple'
+    case 'Sci-Fi':
+      return 'blue'
+    case 'Adventure':
+      return 'green'
+    default:
+      return 'purple'
   }
 }
 
@@ -96,8 +110,8 @@ export function GameInterface({ story }: GameInterfaceProps) {
   const router = useRouter()
 
   const totalPhrases = story.phrases.length
-  const IconComponent = getThemeIcon(story.theme.icon)
-  const colors = getThemeColors(story.theme.color)
+  const IconComponent = getThemeIcon(story.theme)
+  const colors = getThemeColors(getThemeColor(story.theme))
   const difficultyName = getDifficultyName(totalPhrases)
   const progress = Math.min(100, Math.round((discoveredPhrases.length / totalPhrases) * 100))
   

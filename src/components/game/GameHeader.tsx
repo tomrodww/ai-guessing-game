@@ -1,5 +1,6 @@
 import Link from 'next/link'
-import { ArrowLeft, Coins, Target, Clock, RotateCcw } from 'lucide-react'
+import Image from 'next/image'
+import { ArrowLeft, Coins, Target, Clock, RotateCcw, Eye, Rocket } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { DIFFICULTY_LEVELS } from '@/lib/difficulty'
 
@@ -7,7 +8,7 @@ interface GameHeaderProps {
   story: {
     id: string
     title: string
-    theme: { name: string; icon: string }
+    theme: string
     phrases: any[]
   }
   coins: number
@@ -18,12 +19,18 @@ interface GameHeaderProps {
   onReset: () => void
 }
 
-// Icon mapping function (copied from original)
-const getThemeIcon = (iconName: string) => {
-  const iconMap: { [key: string]: any } = {
-    // You can add your icon imports here
+// Theme to icon mapping
+const getThemeIcon = (theme: string) => {
+  switch (theme) {
+    case 'Mystery':
+      return Eye
+    case 'Sci-Fi':
+      return Rocket
+    case 'Adventure':
+      return () => <Image src="/map.svg" alt="Adventure" width={20} height={20} />
+    default:
+      return Eye
   }
-  return iconMap[iconName] || Target
 }
 
 export function GameHeader({
@@ -35,7 +42,7 @@ export function GameHeader({
   gameCompleted,
   onReset
 }: GameHeaderProps) {
-  const IconComponent = getThemeIcon(story.theme.icon)
+  const IconComponent = getThemeIcon(story.theme)
   const difficultyLevel = DIFFICULTY_LEVELS.find(level => totalPhrases >= level.minPhrases && totalPhrases <= level.maxPhrases)
   const difficultyName = difficultyLevel?.label || 'Unknown'
 

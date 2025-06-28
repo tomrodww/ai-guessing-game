@@ -16,7 +16,6 @@ export async function generateMetadata({ params }: StoryPageProps): Promise<Meta
   const story = await prisma.story.findUnique({
     where: { id: resolvedParams.id },
     include: { 
-      theme: true,
       phrases: {
         select: { id: true } // Only need count for metadata
       }
@@ -32,21 +31,20 @@ export async function generateMetadata({ params }: StoryPageProps): Promise<Meta
   return {
     title: `${story.title} | WhaHappen`,
     description: story.context,
-    keywords: `AI, game, mystery, ${story.theme.name}, ${getDifficultyName(story.phrases.length)}`,
+    keywords: `AI, game, mystery, ${story.theme}, ${getDifficultyName(story.phrases.length)}`,
   }
 }
 
 export default async function StoryPage({ params }: StoryPageProps) {
   const resolvedParams = await params
   
-  // Only fetch basic story info and theme, not the actual phrase texts
+  // Only fetch basic story info, not the actual phrase texts
   const story = await prisma.story.findUnique({
     where: {
       id: resolvedParams.id,
       isActive: true
     },
     include: {
-      theme: true,
       phrases: {
         select: {
           id: true,

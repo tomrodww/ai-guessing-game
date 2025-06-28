@@ -5,49 +5,13 @@ const prisma = new PrismaClient()
 async function main() {
   console.log('🌱 Starting database seed...')
 
-  // Create themes
-  const mysteryTheme = await prisma.theme.upsert({
-    where: { name: 'Mystery' },
-    update: {},
-    create: {
-      name: 'Mystery',
-      description: 'Puzzling cases and unexplained phenomena',
-      color: 'purple',
-      icon: 'Eye',
-    },
-  })
-
-  const sciFiTheme = await prisma.theme.upsert({
-    where: { name: 'Sci-Fi' },
-    update: {},
-    create: {
-      name: 'Sci-Fi',
-      description: 'Futuristic scenarios and space mysteries',
-      color: 'blue',
-      icon: 'Rocket',
-    },
-  })
-
-  const adventureTheme = await prisma.theme.upsert({
-    where: { name: 'Adventure' },
-    update: {},
-    create: {
-      name: 'Adventure',
-      description: 'Exciting journeys and daring escapades',
-      color: 'green',
-      icon: 'Map',
-    },
-  })
-
-  console.log('✅ Themes created')
-
   // Create stories with phrases, full text, and hints
   const stories = [
         {
           title: 'Tenth Floor',
           context: 'A man lives on the tenth floor. To go to work, he takes the elevator down. When he returns, he takes the elevator to the seventh floor and uses the stairs for the rest. On rainy days, he takes the elevator all the way to the tenth floor. Why?',
           hints: ['Physical stature', 'An object for rain', 'Button height'],
-          themeId: mysteryTheme.id,
+          theme: 'Mystery',
           phrases: [
             'The man is a person of very short stature.',
             'He cannot reach the tenth-floor button.',
@@ -60,7 +24,7 @@ async function main() {
           title: 'Forest Diver',
           context: 'A man is found dead in a forest, wearing a full scuba diving suit. The forest is miles away from the nearest large body of water. Why?',
           hints: ['Emergency services', 'Water transport', 'Fire'],
-          themeId: mysteryTheme.id,
+          theme: 'Mystery',
           phrases: [
             'A forest fire was raging nearby.',
             'A helicopter was fighting the fire.',
@@ -75,7 +39,7 @@ async function main() {
           title: 'Music Stops',
           context: 'The music stopped. She died. Why?',
           hints: ['Performance', 'Guidance', 'Blindness'],
-          themeId: mysteryTheme.id,
+          theme: 'Mystery',
           phrases: [
             'She was a circus tightrope walker.',
             'She performed her act blindfolded.',
@@ -88,7 +52,7 @@ async function main() {
           title: 'Bankrupt Driver',
           context: 'A man pushes his car, stops at a hotel, and is suddenly bankrupt. Why?',
           hints: ['Plastic', 'Board', 'Rent'],
-          themeId: mysteryTheme.id,
+          theme: 'Mystery',
           phrases: [
             'The man is playing Monopoly.',
             'His game piece is the car token.',
@@ -102,7 +66,7 @@ async function main() {
           title: 'Gun',
           context: 'A man enters a restaurant and asks for water. The waiter points a revolver at him. The man thanks the waiter and leaves. Why?',
           hints: ['Condition', 'Shock', 'Friendly'],
-          themeId: mysteryTheme.id,
+          theme: 'Mystery',
           phrases: [
             'The man had the hiccups.',
             'The waiter noticed the man was hiccuping.',
@@ -114,7 +78,7 @@ async function main() {
           title: 'Two Bodies',
           context: 'Romeo & Juliet are found dead in a room. Nearby are a puddle, stones, and shards of glass. Why?',
           hints: ['Fish', 'Shattered', 'Pet'],
-          themeId: mysteryTheme.id,
+          theme: 'Mystery',
           phrases: [
             'Romeo & Juliet were two pet fish.',
             'They lived in a glass fishbowl.',
@@ -127,7 +91,7 @@ async function main() {
           title: 'Desert Stick',
           context: 'A naked man is found dead in the desert. Next to him is a small stick. Why?',
           hints: ['Decision', 'Not alone', 'Weight'],
-          themeId: adventureTheme.id,
+          theme: 'Adventure',
           phrases: [
             'The man was in a hot air balloon.',
             'Several other people were with him.',
@@ -144,7 +108,7 @@ async function main() {
           title: 'Train To City',
           context: 'A man took a train to a big city. On the return trip, he was overjoyed, but then suddenly committed suicide. The region was mountainous. Why?',
           hints: ['Medical', 'Temporary', 'Misunderstanding'],
-          themeId: mysteryTheme.id,
+          theme: 'Mystery',
           phrases: [
             'The man had been blind since birth.',
             'He traveled for a revolutionary operation.',
@@ -159,7 +123,7 @@ async function main() {
           title: 'Adam',
           context: 'An adventurer sees two bodies preserved in an iceberg. He gets closer and shouts, "It\'s Adam & Eve!". Why?',
           hints: ['Anatomical', 'Birth', 'Unaltered'],
-          themeId: mysteryTheme.id,
+          theme: 'Mystery',
           phrases: [
             'Adam and Eve were directly created.',
             'They were not born from a mother.',
@@ -171,7 +135,7 @@ async function main() {
           title: 'Blind Man',
           context: 'The world\'s smallest dwarf, who was blind, was found dead on a deserted street. Near him was sawdust. Why?',
           hints: ['Perception', 'Rival', 'Cane'],
-          themeId: mysteryTheme.id,
+          theme: 'Mystery',
           phrases: [
             'He was proud of his title.',
             'His rival was the second smallest dwarf.',
@@ -187,7 +151,7 @@ async function main() {
           title: 'Space Station',
           context: 'On a space station, an astronaut is found dead alone in his quarters. The airlock was sealed and there are no signs of struggle. Why?',
           hints: ['Experiment', 'Light', 'Automatic'],
-          themeId: sciFiTheme.id,
+          theme: 'Sci-Fi',
           phrases: [
             'He was conducting crystal experiments.',
             'One crystal focused a beam of light.',
@@ -204,7 +168,7 @@ async function main() {
           title: 'Library',
           context: 'A librarian is found dead in a locked, windowless library room. The key is in his pocket. Beside him is an old book and warm tea. Why?',
           hints: ['Ancient', 'Metal', 'Toxic'],
-          themeId: mysteryTheme.id,
+          theme: 'Mystery',
           phrases: [
             'He was studying a rare medieval book.',
             'The pages of the book were preserved with mercury.',
@@ -220,7 +184,7 @@ async function main() {
           title: 'Ice',
           context: 'A meatpacking plant owner is found hanging three meters off the ground in a refrigerated room. The power is off, and there is a puddle of water below him. Why?',
           hints: ['Issue', 'Block', 'Slow'],
-          themeId: mysteryTheme.id,
+          theme: 'Mystery',
           phrases: [
             'The owner was facing business problems.',
             'He stood on a massive block of ice.',
@@ -233,7 +197,7 @@ async function main() {
           title: 'Island',
           context: 'A month after a shipwreck, four survivors are found on an island. Two have one arm missing, one is missing an arm and a leg, and the fourth is whole. Why?',
           hints: ['Profession', 'Sacrifice', 'Resources'],
-          themeId: adventureTheme.id,
+          theme: 'Adventure',
           phrases: [
             'They arrived on the island intact.',
             'They ran out of food.',
@@ -249,7 +213,7 @@ async function main() {
           title: 'Light Flicker',
           context: 'A man runs down a hallway. The lights flicker. He immediately turns around and walks away slowly. Why?',
           hints: ['Professional', 'carrying', 'Event'],
-          themeId: mysteryTheme.id,
+          theme: 'Mystery',
           phrases: [
             'The man was a lawyer.',
             'He was in a prison.',
@@ -266,7 +230,7 @@ async function main() {
           title: 'Pheasant',
           context: 'A man orders pheasant at a restaurant. He takes one bite, gets out of restaurant and kills himself. Why?',
           hints: ['Traumatic', 'Fooled', 'Meat'],
-          themeId: mysteryTheme.id,
+          theme: 'Mystery',
           phrases: [
             'The man was a shipwreck survivor.',
             'His wife disappeared on the island.',
@@ -282,7 +246,7 @@ async function main() {
           title: 'Call',
           context: 'Every day at the same time, a man gets home, calls another man, and they hang up without a word. Why?',
           hints: ['Noise', 'Non-verbal', 'Neighbors'],
-          themeId: mysteryTheme.id,
+          theme: 'Mystery',
           phrases: [
             'His neighbor is a musician.',
             'They have a pre-arranged agreement.',
@@ -294,7 +258,7 @@ async function main() {
           title: 'Radio',
           context: 'A man is listening to music in his car when it suddenly rewinds. He takes out a gun and kills himself. Why?',
           hints: ['Profession', 'Alibi', 'Technical'],
-          themeId: mysteryTheme.id,
+          theme: 'Mystery',
           phrases: [
             'The man was a radio host.',
             'He had just murdered his wife.',
@@ -309,7 +273,7 @@ async function main() {
           title: 'Jungle',
           context: 'A man is rescued from the jungle, seemingly insane. He has a wound on his arm and dirty fingernails. A hut is found nearby. Why?',
           hints: ['Not alone', 'Unconscious', 'Recurring'],
-          themeId: mysteryTheme.id,
+          theme: 'Mystery',
           phrases: [
             'He was lost in the jungle with a friend.',
             'His friend died.',
@@ -327,7 +291,7 @@ async function main() {
           title: 'Watchman',
           context: 'A watchman tells his boss: "Boss, don\'t take your usual road home." The next day, the boss fires him. Why?',
           hints: ['Words', 'Job', 'Dream'],
-          themeId: mysteryTheme.id,
+          theme: 'Mystery',
           phrases: [
             'He is a night watchman.',
             'Last night the watchman had a dream.',
@@ -341,7 +305,7 @@ async function main() {
           title: 'Light',
           context: 'A man turns off a light, goes to a bar, sees a TV report, returns home, turns on the light, and commits suicide. Why?',
           hints: ['Important', 'Job', 'Fatal'],
-          themeId: mysteryTheme.id,
+          theme: 'Mystery',
           phrases: [
             'The man was a lighthouse keeper.',
             'He turned off the beacon.',
@@ -354,7 +318,7 @@ async function main() {
           title: 'Phone',
           context: 'A man jumps from the 10th floor to kill himself. Halfway down, he hears a telephone ring and instantly regrets his decision. Why?',
           hints: ['Assumption', 'Sign', 'Global'],
-          themeId: sciFiTheme.id,
+          theme: 'Sci-Fi',
           phrases: [
             'A global catastrophe had occurred.',
             'He believed he was the last human alive.',
@@ -366,7 +330,7 @@ async function main() {
           title: 'Lighter',
           context: 'A man lights a lighter, looks to his side, and dies. Why?',
           hints: ['Plan', 'Not alone', 'Dead'],
-          themeId: mysteryTheme.id,
+          theme: 'Mystery',
           phrases: [
             'The man was a prisoner.',
             'His escape plan involved a coffin.',
@@ -382,7 +346,7 @@ async function main() {
           title: 'Three',
           context: 'In a boarding house live a dentist student, a medical student, a woman, and a blind man. After the woman showers, something happens, she is horrified and becomes a recluse. That same day, the others start their careers. Why?',
           hints: ['Good news', 'Wrong assumptions', 'Final downfall'],
-          themeId: mysteryTheme.id,
+          theme: 'Mystery',
           phrases: [
             'The dentist knocked to announce his graduation.',
             'She answered the door in a towel.',
@@ -403,7 +367,7 @@ async function main() {
         title: storyData.title,
         context: storyData.context,
         hints: storyData.hints,
-        themeId: storyData.themeId,
+        theme: storyData.theme,
         phrases: {
           create: storyData.phrases.map((phrase, index) => ({
             order: index + 1,
@@ -415,7 +379,6 @@ async function main() {
   }
 
   console.log('✅ Stories with phrases created')
-  console.log(`📊 Created ${await prisma.theme.count()} themes`)
   console.log(`📊 Created ${await prisma.story.count()} stories`)
   console.log(`📊 Created ${await prisma.storyPhrase.count()} phrases`)
 }
@@ -423,10 +386,9 @@ async function main() {
 main()
   .then(async () => {
     await prisma.$disconnect()
-    console.log('🎉 Database seeded successfully!')
   })
   .catch(async (e) => {
-    console.error('❌ Error seeding database:', e)
+    console.error(e)
     await prisma.$disconnect()
     process.exit(1)
   }) 

@@ -1,14 +1,13 @@
 'use client'
 
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Theme } from '@prisma/client'
 import { cn } from '@/lib/utils'
 import { DIFFICULTY_LEVELS } from '@/lib/difficulty'
 import { Filter, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 interface StoryFiltersProps {
-  themes: Theme[]
+  themes: string[]
   selectedTheme?: string
   selectedDifficulty?: string
 }
@@ -84,8 +83,8 @@ export function StoryFilters({
         >
           <option value="">All</option>
           {themes.map((theme) => (
-            <option key={theme.id} value={theme.id}>
-              {theme.name}
+            <option key={theme} value={theme}>
+              {theme}
             </option>
           ))}
         </select>

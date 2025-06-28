@@ -1,5 +1,5 @@
 import Image from 'next/image'
-import { Story, Theme } from '@prisma/client'
+import { Story } from '@prisma/client'
 import { getThemeColors, cn } from '@/lib/utils'
 import { getDifficultyName, DIFFICULTY_LEVELS } from '@/lib/difficulty'
 import { ChevronRight, Eye, Rocket, Hourglass } from 'lucide-react'
@@ -8,7 +8,6 @@ import { Badge } from '@/components/ui/badge'
 
 interface StoryCardProps {
   story: Story & { 
-    theme: Theme
     phrases: { id: string }[]
   }
 }
@@ -17,6 +16,20 @@ const icons = {
   'Eye': Eye,
   'Rocket': Rocket,
   'Map': () => <Image src="/map.svg" alt="Adventure" width={16} height={16} />,
+}
+
+// Theme to icon mapping
+const getThemeIcon = (theme: string) => {
+  switch (theme) {
+    case 'Mystery':
+      return Eye
+    case 'Sci-Fi':
+      return Rocket
+    case 'Adventure':
+      return () => <Image src="/map.svg" alt="Adventure" width={16} height={16} />
+    default:
+      return Eye
+  }
 }
 
 // Note: getDifficultyName is now imported from @/lib/difficulty
@@ -43,7 +56,7 @@ const DifficultyHourglasses = ({ level }: { level: string }) => {
 }
 
 export function StoryCard({ story }: StoryCardProps) {
-  const IconComponent = icons[story.theme.icon as keyof typeof icons]
+  const IconComponent = getThemeIcon(story.theme)
   const phraseCount = story.phrases.length
   const difficultyName = getDifficultyName(phraseCount)
 
