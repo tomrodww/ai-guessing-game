@@ -444,8 +444,8 @@ export function GameInterface({ story }: GameInterfaceProps) {
   return (
     <div className="container mx-auto min-h-screen bg-background w-screen">
       {/* Header */}
-      <div className="container mx-auto sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <header className="bg-background/80 backdrop-blur-md border-b border-border sticky top-0 z-50">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-4">
               {/* Logo */}
@@ -498,9 +498,9 @@ export function GameInterface({ story }: GameInterfaceProps) {
             </div>
           </div>
         </div>
-      </div>
+      </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 h-8">
+      <div className="max-w-7xl mx-auto px-4 py-4 h-full">
         {/* Navigation buttons */}
         <div className="flex justify-between items-center w-full h-8">
           {/* Left column - Previous */}
@@ -513,7 +513,7 @@ export function GameInterface({ story }: GameInterfaceProps) {
                 title={`Previous: ${navigation.previous.title}`}
               >
                 <ChevronLeft className={`w-4 h-4 flex-shrink-0 ${isNavigating ? 'animate-pulse' : ''}`} />
-                <span className="hidden sm:inline truncate">{navigation.previous.title}</span>
+                <span className="hidden sm:inline truncate mt-1">{navigation.previous.title}</span>
               </button>
             ) : (
               <div className="flex items-center space-x-1 px-2 py-1 text-sm text-muted-foreground/50">
@@ -535,7 +535,7 @@ export function GameInterface({ story }: GameInterfaceProps) {
                 )}
                 title={`Next: ${navigation.next.title}`}
               >
-                <span className="hidden sm:inline truncate">{navigation.next.title}</span>
+                <span className="hidden sm:inline truncate mt-1">{navigation.next.title}</span>
                 <ChevronRight className={`w-4 h-4 flex-shrink-0 ${isNavigating ? 'animate-pulse' : ''}`} />
               </button>
             ) : (
