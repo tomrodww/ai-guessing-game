@@ -1,6 +1,5 @@
 import React, { Suspense } from 'react'
 import { Metadata } from 'next'
-import { Header } from '@/components/Header'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { StorySelection } from '@/components/StorySelection'
 
@@ -37,7 +36,6 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   
   return (
     <div className="container mx-auto min-h-screen bg-background w-screen">
-      <Header />
       <main className="px-4 py-8 h-full max-w-7xl mx-auto">
         {/* Hero Section */}
         <section id="hero" className="text-center mb-12">

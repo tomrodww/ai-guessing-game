@@ -1,21 +1,14 @@
 import Image from 'next/image'
 import { Story } from '@prisma/client'
-import { getThemeColors, cn } from '@/lib/utils'
+import { cn } from '@/lib/utils'
 import { getDifficultyName, DIFFICULTY_LEVELS } from '@/lib/difficulty'
 import { ChevronRight, Eye, Rocket, Hourglass } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 
 interface StoryCardProps {
   story: Story & { 
     phrases: { id: string }[]
   }
-}
-
-const icons = {
-  'Eye': Eye,
-  'Rocket': Rocket,
-  'Map': () => <Image src="/map.svg" alt="Adventure" width={16} height={16} />,
 }
 
 // Theme to icon mapping

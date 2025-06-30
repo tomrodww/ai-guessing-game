@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { StoryWithDetails, AffirmationHistory, AffirmationResponse } from '@/types'
-import { getThemeColors, formatDuration, cn } from '@/lib/utils'
+import { formatDuration, cn } from '@/lib/utils'
 import { getDifficultyName } from '@/lib/difficulty'
 import { 
   ArrowLeft, 
@@ -93,7 +93,7 @@ export function GameInterface({ story }: GameInterfaceProps) {
   const [yesAffirmations, setYesAffirmations] = useState<PlayerAffirmation[]>([])
   const [currentAffirmation, setCurrentAffirmation] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [gameStartTime] = useState(new Date())
+  const [gameStartTime, setGameStartTime] = useState(new Date())
   const [gameCompleted, setGameCompleted] = useState(false)
   const [discoveredPhrases, setDiscoveredPhrases] = useState<string[]>([])
   const [revealedPhraseTexts, setRevealedPhraseTexts] = useState<Record<string, string>>({}) // Maps phrase ID to actual text
@@ -110,9 +110,6 @@ export function GameInterface({ story }: GameInterfaceProps) {
   const router = useRouter()
 
   const totalPhrases = story.phrases.length
-  const IconComponent = getThemeIcon(story.theme)
-  const colors = getThemeColors(getThemeColor(story.theme))
-  const difficultyName = getDifficultyName(totalPhrases)
   const progress = Math.min(100, Math.round((discoveredPhrases.length / totalPhrases) * 100))
   
   // Calculate word count for validation
@@ -382,6 +379,7 @@ export function GameInterface({ story }: GameInterfaceProps) {
     setHintsUnlocked([]) // Reset unlocked hints
     setShowCompletionDialog(false) // Close dialog if open
     inputRef.current?.focus()
+    setGameStartTime(new Date())
   }
 
   const unlockHint = async (hintIndex: number) => {
@@ -443,64 +441,8 @@ export function GameInterface({ story }: GameInterfaceProps) {
 
   return (
     <div className="container mx-auto min-h-screen bg-background w-screen">
-      {/* Header */}
-      <header className="bg-background/80 backdrop-blur-md border-b border-border sticky top-0 z-50">
-        <div className="mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              {/* Logo */}
-              <Link href="/" className="flex items-center gap-3 group">
-                <Image src="/wha-happen-dark.svg" alt="WhaHappen?" width={160} height={160} className='mt-2'/>
-              </Link>
-              
-              <div className="h-6 w-px bg-border" />
-              
-              <div className="flex items-center space-x-3 max-md:hidden">
-                <div className="p-2 rounded-lg">
-                  <IconComponent className="w-5 h-5" />
-                </div>
-                <div>
-                  <h1 className="font-semibold text-foreground text-xl mt-1">{story.title}<span className="text-sm text-muted-foreground"> • {difficultyName}</span></h1>
-                </div>
-              </div>
-            </div>
-
-
-            {/* Game stats */}
-            <div className="flex items-center space-x-4 max-md:text-xs text-sm">
-              <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                <Coins className="w-4 h-4 text-yellow-500" />
-                <span className="text-yellow-500 font-medium mt-1">{coins}</span>
-              </div>
-              
-              <div className="flex items-center space-x-2 text-sm text-muted-foreground ">
-                <Target className="w-4 h-4 text-green-500" />
-                <span className="mt-1">{discoveredPhrases.length}/{totalPhrases}</span>
-              </div>
-              
-              <div className="flex items-center space-x-2 text-sm text-muted-foreground w-20">
-                <Clock className="w-4 h-4 text-blue-500" />
-                <span className="mt-1">{formatDuration(gameStartTime, gameCompleted ? new Date() : currentTime)}</span>
-              </div>
-
-              {gameCompleted && (
-                <button
-                  onClick={resetGame}
-                  className={cn(
-                    "flex items-center space-x-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
-                    colors.bg, colors.text, "hover:opacity-80"
-                  )}
-                >
-                  <RotateCcw className="w-4 h-4" />
-                  <span className="mt-1">Play Again</span>
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
-
       <div className="max-w-7xl mx-auto px-4 py-4 h-full">
+
         {/* Navigation buttons */}
         <div className="flex justify-between items-center w-full h-8">
           {/* Left column - Previous */}
@@ -547,7 +489,9 @@ export function GameInterface({ story }: GameInterfaceProps) {
           </div>
         </div>
         
+        {/* Game Area */}    
         <div className="grid grid-cols-1 lg:grid-cols-3 lg:divide-x lg:divide-border">
+          
           {/* Main Game Area */}
           <div className="lg:col-span-2 lg:pr-4 ">
             {/* Story Context */}
@@ -778,6 +722,39 @@ export function GameInterface({ story }: GameInterfaceProps) {
 
           {/* Sidebar*/}
           <div className="space-y-4 lg:pl-4">
+            {/* Game stats Panel */}
+            <div className="p-2 space-y-2 text-sm rounded-lg bg-gray-900 ">
+              <div className="flex items-center space-x-4 max-md:text-xs text-sm justify-around">
+                <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                  <Coins className="w-4 h-4 text-yellow-500" />
+                  <span className="text-yellow-500 font-medium mt-1">{coins}</span>
+                </div>
+                
+                <div className="flex items-center space-x-2 text-sm text-muted-foreground ">
+                  <Target className="w-4 h-4 text-green-500" />
+                  <span className="mt-1">{discoveredPhrases.length}/{totalPhrases}</span>
+                </div>
+                
+                <div className="flex items-center space-x-2 text-sm text-muted-foreground w-20">
+                  <Clock className="w-4 h-4 text-blue-500" />
+                  <span className="mt-1">{formatDuration(gameStartTime, gameCompleted ? new Date() : currentTime)}</span>
+                </div>
+
+                {gameCompleted && (
+                  <button
+                    onClick={resetGame}
+                    className={cn(
+                      "flex items-center space-x-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
+                      "hover:opacity-80"
+                    )}
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    <span className="mt-1">Play Again</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
             {/* Economy Panel */}
             <div className="p-2 space-y-2 text-sm border-b border-border">
               <div className="flex items-center space-x-2">
@@ -828,6 +805,7 @@ export function GameInterface({ story }: GameInterfaceProps) {
               </div>
             </div>
 
+            {/* Clues found Panel */}
             <div className="border-b border-border">
               <div className="p-2">
                 <div className="flex items-center space-x-2">

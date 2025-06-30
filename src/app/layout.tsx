@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
+import { Header } from '@/components/Header'
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -79,6 +80,8 @@ export default function RootLayout({
       </head>
       <body className="antialiased h-full" style={{ fontFamily: "'Special Elite', monospace" }}>
         <div className="min-h-screen bg-background-black text-foreground h-full overflow-y-auto">
+          <Header />
+
           {children}
         </div>
       </body>

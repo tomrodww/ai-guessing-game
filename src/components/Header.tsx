@@ -1,25 +1,94 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { Home } from 'lucide-react'
+import { Eye, Rocket } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import Image from 'next/image'
+import { StoryWithDetails } from '@/types'
+import { usePathname } from 'next/navigation'
+import { getDifficultyName } from '@/lib/difficulty'
+import { useEffect, useState } from 'react'
+
+// Theme to icon mapping
+const getThemeIcon = (theme: string) => {
+  switch (theme) {
+    case 'Mystery':
+      return Eye
+    case 'Sci-Fi':
+      return Rocket
+    case 'Adventure':
+      return () => <Image src="/map.svg" alt="Adventure" width={20} height={20} />
+    default:
+      return Eye
+  }
+}
 
 export function Header() {
+  const pathname = usePathname()
+  const [story, setStory] = useState<StoryWithDetails | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  // Extract story ID from pathname
+  const storyId = pathname.startsWith('/story/') ? pathname.split('/')[2] : null
+
+  useEffect(() => {
+    if (storyId) {
+      setLoading(true)
+      fetch(`/api/story/${storyId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            setStory(data.story)
+          }
+        })
+        .catch(error => console.error('Failed to fetch story:', error))
+        .finally(() => setLoading(false))
+    } else {
+      setStory(null)
+    }
+  }, [storyId])
+
+  const totalPhrases = story?.phrases.length || 0
+  const IconComponent = getThemeIcon(story?.theme || '')
+  const difficultyName = getDifficultyName(totalPhrases)
 
   return (
     <header className="bg-background/80 backdrop-blur-md border-b border-border sticky top-0 z-50">
       <div className="mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex items-center h-16 justify-between">
+            {/* Logo */}
             <div className="flex items-center space-x-4">
-              {/* Logo */}
               <Link href="/" className="flex items-center gap-3 group">
                 <Image src="/wha-happen-dark.svg" alt="WhaHappen?" width={160} height={160} className='mt-2'/>
               </Link>
+
+              {/* Theme Icon and Story Title */}
+              {pathname !== '/' && storyId && (
+                <>
+                  <div className="h-6 w-px bg-border mx-4" />
+                
+                  <div className="flex items-center space-x-3 max-md:hidden">
+                    <div className="p-2 rounded-lg">
+                      <IconComponent className="w-5 h-5" />
+                    </div>
+                    <div>
+                      {loading ? (
+                        <div className="h-7 w-48 bg-muted rounded animate-pulse" />
+                      ) : (
+                        <h1 className="font-semibold text-foreground text-xl mt-1">
+                          {story?.title || 'Loading...'}
+                          <span className="text-sm text-muted-foreground"> • {difficultyName}</span>
+                        </h1>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
+
             {/* Navigation */}
-            <div className="flex items-center gap-4">
+            {pathname === '/' && (
+            <div className="flex items-center gap-4 mt-1">
               {/* Donation Dropdown */}
               <div className="relative group">
                 <Button variant="ghost" size="sm" className="flex items-center gap-2">
@@ -50,6 +119,7 @@ export function Header() {
                 </div>
               </div>
             </div>
+            )}
           </div>
         </div>
     </header>
