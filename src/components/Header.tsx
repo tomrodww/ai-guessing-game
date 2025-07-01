@@ -72,13 +72,13 @@ export function Header() {
                       <IconComponent className="w-5 h-5" />
                     </div>
                     <div>
-                      {loading ? (
-                        <div className="h-7 w-48 bg-muted rounded animate-pulse" />
-                      ) : (
+                      {story?.title ? (
                         <h1 className="font-semibold text-foreground text-xl mt-1">
-                          {story?.title || 'Loading...'}
+                          {story?.title}
                           <span className="text-sm text-muted-foreground"> • {difficultyName}</span>
                         </h1>
+                      ) : (
+                        <div className="h-7 w-48 bg-muted rounded animate-pulse" />
                       )}
                     </div>
                   </div>

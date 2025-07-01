@@ -62,7 +62,7 @@ export function StoryFilters({
                   isSelected && 'text-primary underline'
                 )}
               >
-                {difficulty.label}
+                {difficulty.name}
               </Button>
               {index < DIFFICULTY_LEVELS.length - 1 && <span className="text-muted-foreground mx-1">|</span>}
             </div>

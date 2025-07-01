@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { StoryWithDetails, AffirmationHistory, AffirmationResponse } from '@/types'
 import { formatDuration, cn } from '@/lib/utils'
-import { getDifficultyName } from '@/lib/difficulty'
 import { 
   ArrowLeft, 
   CheckCircle, 
