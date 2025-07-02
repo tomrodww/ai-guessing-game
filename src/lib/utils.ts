@@ -19,4 +19,15 @@ export function formatDuration(startTime: Date, endTime?: Date): string {
   }
   return `${seconds}s`
 }
+
+/**
+ * Format countdown timer for display (shows remaining time)
+ */
+export function formatCountdown(remainingSeconds: number): string {
+  const minutes = Math.floor(remainingSeconds / 60)
+  const seconds = remainingSeconds % 60
+  
+  // Always show 2 digits for both minutes and seconds
+  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+}
  

@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { StoryWithDetails, AffirmationHistory, AffirmationResponse } from '@/types'
-import { formatDuration, cn } from '@/lib/utils'
+import { formatDuration, formatCountdown, cn } from '@/lib/utils'
 import { 
   ArrowLeft, 
   CheckCircle, 
@@ -104,11 +104,62 @@ export function GameInterface({ story }: GameInterfaceProps) {
   const [navigation, setNavigation] = useState<StoryNavigation | null>(null)
   const [isNavigating, setIsNavigating] = useState(false)
   
+  // Gamification animations state
+  const [coinChange, setCoinChange] = useState<{value: number, id: number} | null>(null)
+  const [phraseAnimation, setPhraseAnimation] = useState<{show: boolean, id: number} | null>(null)
+  const [timeWarning, setTimeWarning] = useState<{message: string, id: number} | null>(null)
+  const [timeWarnings, setTimeWarnings] = useState<{[key: string]: boolean}>({
+    '15min': false,
+    '10min': false,
+    '5min': false,
+    '1min': false
+  })
+  
   const chatEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
 
   const totalPhrases = story.phrases.length
+  
+  // Animation helper functions
+  const triggerCoinAnimation = (change: number) => {
+    const id = Date.now()
+    setCoinChange({ value: change, id })
+    setTimeout(() => setCoinChange(null), 2000) // Animation duration
+  }
+  
+  const triggerPhraseAnimation = () => {
+    const id = Date.now()
+    setPhraseAnimation({ show: true, id })
+    setTimeout(() => setPhraseAnimation(null), 1500) // Animation duration
+  }
+  
+  const triggerTimeWarning = (message: string) => {
+    console.log('triggerTimeWarning called with:', message)
+    const id = Date.now()
+    setTimeWarning({ message, id })
+    setTimeout(() => setTimeWarning(null), 3000) // Longer duration for warnings
+  }
+  
+  // Timer helper functions
+  const getElapsedMinutes = () => {
+    const diff = (gameCompleted ? new Date() : currentTime).getTime() - gameStartTime.getTime()
+    return Math.floor(diff / 60000)
+  }
+  
+  const getElapsedSeconds = () => {
+    const diff = (gameCompleted ? new Date() : currentTime).getTime() - gameStartTime.getTime()
+    return Math.floor(diff / 1000)
+  }
+  
+  const getRemainingSeconds = () => {
+    const totalGameSeconds = 20 * 60 // 20 minutes in seconds
+    return Math.max(0, totalGameSeconds - getElapsedSeconds())
+  }
+  
+  const isTimeExpired = () => getElapsedMinutes() >= 20
+  const getTimeRemaining = () => Math.max(0, 20 - getElapsedMinutes())
+  const isLastFiveMinutes = () => getTimeRemaining() <= 5
   const progress = Math.min(100, Math.round((discoveredPhrases.length / totalPhrases) * 100))
   
   // Calculate word count for validation
@@ -124,11 +175,6 @@ export function GameInterface({ story }: GameInterfaceProps) {
       }
     }
   }, [affirmations])
-
-  // Focus input
-  useEffect(() => {
-    inputRef.current?.focus()
-  }, [])
 
   // Initialize game session - create a new session on every page load
   useEffect(() => {
@@ -153,6 +199,9 @@ export function GameInterface({ story }: GameInterfaceProps) {
           setCoins(result.data.coins)
           setHintsUnlocked(result.data.hintsUnlocked)
         }
+
+        // Focus input
+        inputRef.current?.focus()
       } catch (error) {
         console.error('Error starting game session:', error)
       }
@@ -161,16 +210,50 @@ export function GameInterface({ story }: GameInterfaceProps) {
     startSession()
   }, [story.id])
 
-  // Real-time timer update
+  // Real-time timer update with warnings
   useEffect(() => {
     const timer = setInterval(() => {
-      if (!gameCompleted) {
-        setCurrentTime(new Date())
+      if (!gameCompleted && !isTimeExpired()) {
+        const now = new Date()
+        setCurrentTime(now)
+        
+        // Check for time warnings - calculate elapsed time directly
+        const elapsedMs = now.getTime() - gameStartTime.getTime()
+        const elapsed = Math.floor(elapsedMs / 60000) // minutes
+        const elapsedSeconds = Math.floor(elapsedMs / 1000) // seconds
+        const timeRemaining = Math.max(0, 20 - elapsed)
+                  
+        // Warnings based on time remaining
+        if (timeRemaining <= 15 && timeRemaining > 14 && !timeWarnings['15min']) {
+          console.log('Triggering 15 minutes left warning (test)')
+          setTimeWarnings(prev => ({ ...prev, '15min': true }))
+          triggerTimeWarning('⚠️ 15 minutes left! (test)')
+        }
+        if (timeRemaining <= 10 && timeRemaining > 9 && !timeWarnings['10min']) {
+          console.log('Triggering 10 minutes left warning')
+          setTimeWarnings(prev => ({ ...prev, '10min': true }))
+          triggerTimeWarning('⚠️ 10 minutes left!')
+        }
+        if (timeRemaining <= 5 && timeRemaining > 4 && !timeWarnings['5min']) {
+          console.log('Triggering 5 minutes left warning')
+          setTimeWarnings(prev => ({ ...prev, '5min': true }))
+          triggerTimeWarning('🚨 5 minutes left!')
+        }
+        if (timeRemaining <= 1 && timeRemaining > 0 && !timeWarnings['1min']) {
+          console.log('Triggering 1 minute left warning')
+          setTimeWarnings(prev => ({ ...prev, '1min': true }))
+          triggerTimeWarning('🚨 1 minute left!')
+        }
+        
+        // End game if time expired
+        if (elapsed >= 20) {
+          setGameCompleted(true)
+        }
       }
     }, 1000) // Update every second
 
     return () => clearInterval(timer)
-  }, [gameCompleted])
+  }, [gameCompleted, timeWarnings, gameStartTime])
 
   // Fetch navigation data
   useEffect(() => {
@@ -214,10 +297,15 @@ export function GameInterface({ story }: GameInterfaceProps) {
       } catch (error) {
         console.error('Error fetching revealed phrases:', error)
       }
+
+      const chatContainer = chatEndRef.current?.parentElement
+      if (chatContainer) {
+        chatContainer.scrollTop = 0
+      }
     }
 
     fetchRevealedPhrases()
-  }, [sessionId, story.id])
+  }, [sessionId, story.id, ])
 
   const submitAffirmation = async () => {
     if (!currentAffirmation.trim() || isSubmitting) return
@@ -285,6 +373,7 @@ export function GameInterface({ story }: GameInterfaceProps) {
 
         // Deduct 1 coin for making a statement
         setCoins(prev => prev - 1)
+        triggerCoinAnimation(-1)
 
         // Add affirmation to history
         const newAffirmation: AffirmationHistory = {
@@ -312,6 +401,7 @@ export function GameInterface({ story }: GameInterfaceProps) {
         // Handle phrase discovery
         if (data.phraseDiscovered) {
           setDiscoveredPhrases(prev => [...prev, data.phraseDiscovered!.id])
+          triggerPhraseAnimation()
           
           // Store the actual revealed phrase text securely
           setRevealedPhraseTexts(prev => ({
@@ -322,6 +412,7 @@ export function GameInterface({ story }: GameInterfaceProps) {
           // Add coins for revealing a phrase (3 coins per phrase)
           if (data.coinsEarned) {
             setCoins(prev => prev + data.coinsEarned!)
+            triggerCoinAnimation(data.coinsEarned)
           }
         }
 
@@ -377,6 +468,10 @@ export function GameInterface({ story }: GameInterfaceProps) {
     setCoins(7) // Reset to starting coins
     setHintsUnlocked([]) // Reset unlocked hints
     setShowCompletionDialog(false) // Close dialog if open
+    setCoinChange(null) // Reset animations
+    setPhraseAnimation(null)
+    setTimeWarning(null)
+    setTimeWarnings({ '15min': false, '10min': false, '5min': false, '1min': false })
     inputRef.current?.focus()
     setGameStartTime(new Date())
   }
@@ -411,8 +506,10 @@ export function GameInterface({ story }: GameInterfaceProps) {
         console.log('Unlock hint result:', result)
         
         if (result.success) {
+          const costPaid = cost
           setCoins(result.data.coins)
           setHintsUnlocked(result.data.hintsUnlocked)
+          triggerCoinAnimation(-costPaid)
         } else {
           console.error('Failed to unlock hint:', result.error)
         }
@@ -574,7 +671,7 @@ export function GameInterface({ story }: GameInterfaceProps) {
               </div>
 
               {/* Input Area */}
-              {!gameCompleted && (
+              {!gameCompleted && !isTimeExpired() && (
                 <div className="px-4">
                   {coins === 0 && (
                     <div className="mb-3 p-3 bg-red-900/20 border border-red-700 rounded-lg">
@@ -723,20 +820,57 @@ export function GameInterface({ story }: GameInterfaceProps) {
           <div className="space-y-4 lg:pl-4">
             {/* Game stats Panel */}
             <div className="p-2 space-y-2 text-sm rounded-lg bg-gray-900 ">
-              <div className="flex items-center space-x-4 max-md:text-xs text-sm justify-around">
-                <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+              <div className="flex items-center max-md:text-xs text-sm justify-around">
+                <div className="flex items-center space-x-2 text-sm text-muted-foreground relative px-2">
                   <Coins className="w-4 h-4 text-yellow-500" />
                   <span className="text-yellow-500 font-medium mt-1">{coins}</span>
+                  {coinChange && (
+                    <span 
+                      key={coinChange.id}
+                      className={`absolute left-8 text-lg font-bold text-center ${
+                        coinChange.value > 0 ? 'text-green-400 -top-2' : 'text-red-400 top-6'
+                      } transition-all duration-2000`}
+                      style={{
+                        animation: coinChange.value > 0 ? 'fadeUpOut 2s ease-out forwards' : 'fadeDownOut 2s ease-out forwards'
+                      }}
+                    >
+                      {coinChange.value > 0 ? '+' : ''}{coinChange.value}
+                    </span>
+                  )}
                 </div>
                 
-                <div className="flex items-center space-x-2 text-sm text-muted-foreground ">
+                <div className="flex items-center space-x-2 text-sm text-muted-foreground relative px-2">
                   <Target className="w-4 h-4 text-green-500" />
                   <span className="mt-1">{discoveredPhrases.length}/{totalPhrases}</span>
+                  {phraseAnimation && (
+                    <span 
+                      key={phraseAnimation.id}
+                      className="absolute -top-1 -right-1 text-green-400 animate-ping"
+                      style={{
+                        animation: 'ping 1.5s ease-out'
+                      }}
+                    >
+                      ✨
+                    </span>
+                  )}
                 </div>
                 
-                <div className="flex items-center space-x-2 text-sm text-muted-foreground w-20">
-                  <Clock className="w-4 h-4 text-blue-500" />
-                  <span className="mt-1">{formatDuration(gameStartTime, gameCompleted ? new Date() : currentTime)}</span>
+                <div className="flex items-center space-x-2 text-sm text-muted-foreground relative px-2 justify-center">
+                  <Clock className={`w-4 h-4 ${isLastFiveMinutes() ? 'text-red-500' : 'text-blue-500'}`} />
+                  <span className={`mt-1 w-10 ${isLastFiveMinutes() ? 'text-red-400 font-bold' : ''}`}>
+                    {isTimeExpired() ? '00:00' : formatCountdown(getRemainingSeconds())}
+                  </span>
+                  {timeWarning && (
+                    <span 
+                      key={timeWarning.id}
+                      className="absolute top-6 left-0 text-orange-400 text-xs font-bold transition-all duration-3000 whitespace-nowrap z-10"
+                      style={{
+                        animation: 'fadeDownOut 3s ease-out forwards'
+                      }}
+                    >
+                      {timeWarning.message}
+                    </span>
+                  )}
                 </div>
 
                 {gameCompleted && (
@@ -752,6 +886,23 @@ export function GameInterface({ story }: GameInterfaceProps) {
                   </button>
                 )}
               </div>
+              
+              {/* Time warnings */}
+              {!gameCompleted && getTimeRemaining() <= 5 && getTimeRemaining() > 0 && (
+                <div className="text-center py-2">
+                  <p className="text-red-400 text-sm font-bold animate-pulse">
+                    ⚠️ Only {getTimeRemaining()} minutes left!
+                  </p>
+                </div>
+              )}
+              
+              {isTimeExpired() && (
+                <div className="text-center py-2">
+                  <p className="text-red-500 text-sm font-bold">
+                    ⏰ Time's up! Game over.
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Economy Panel */}
