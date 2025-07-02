@@ -37,3 +37,21 @@ export function getDifficultyName(phraseCount: number): string {
   }
   return 'Unknown'
 }
+
+
+/**
+ * Get difficulty level by value (for filters)
+ */
+export function getDifficultyByValue(value: string): DifficultyLevel | undefined {
+  return DIFFICULTY_LEVELS.find(level => level.value === value)
+}
+
+/**
+ * Check if phrase count matches a specific difficulty filter
+ */
+export function matchesDifficultyFilter(phraseCount: number, filterValue: string): boolean {
+  const difficulty = getDifficultyByValue(filterValue)
+  if (!difficulty) return false
+  
+  return phraseCount >= difficulty.minPhrases && phraseCount <= difficulty.maxPhrases
+} 
