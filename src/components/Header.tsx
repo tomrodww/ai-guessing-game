@@ -89,6 +89,22 @@ export function Header() {
             {/* Navigation */}
             {pathname === '/' && (
             <div className="flex items-center gap-4 mt-1">
+              {/* Main Navigation */}
+              <nav className="hidden md:flex items-center gap-6">
+                <Link href="/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  About
+                </Link>
+                <Link href="/how-to-play" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  How to Play
+                </Link>
+                <Link href="/faq" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  FAQ
+                </Link>
+                <Link href="/blog/ai-gaming-revolution" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Blog
+                </Link>
+              </nav>
+
               {/* Donation Dropdown */}
               <div className="relative group">
                 <Button variant="ghost" size="sm" className="flex items-center gap-2">
