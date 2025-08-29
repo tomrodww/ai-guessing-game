@@ -9,14 +9,14 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: 'WhaHappen',
-  description: 'Dive into thrilling mysteries! Make your statement to find the truth.',
+  description: 'Dive into thrilling mysteries! Ask your questions to find the truth.',
   keywords: 'AI, game, mystery, story, guessing, interactive, puzzle, detective',
   authors: [{ name: 'WEC Team' }],
   
   // Open Graph tags for social media sharing
   openGraph: {
     title: 'WhaHappen - Find the truth',
-    description: 'Dive into thrilling mysteries! Make your statement to find the truth.',
+    description: 'Dive into thrilling mysteries! Ask your questions to find the truth.',
     url: 'https://whathappen.org',
     siteName: 'WhaHappen',
     type: 'website',
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'WhaHappen - Find the truth',
-    description: 'Dive into thrilling mysteries! Make your statement to find the truth.',
+    description: 'Dive into thrilling mysteries! Ask your questions to find the truth.',
     site: '@whathappen',
   },
   

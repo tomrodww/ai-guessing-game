@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { StoryWithDetails, AffirmationHistory, AffirmationResponse } from '@/types'
+import { StoryWithDetails, QuestionHistory, QuestionResponse } from '@/types'
 import { formatDuration, formatCountdown, cn } from '@/lib/utils'
 import { 
   ArrowLeft, 
@@ -32,8 +32,8 @@ interface GameInterfaceProps {
   story: StoryWithDetails
 }
 
-interface PlayerAffirmation {
-  affirmation: string
+interface PlayerQuestion {
+  question: string
   answer: 'Yes' | 'No' | 'Irrelevant'
   timestamp: Date
   explanation?: string
@@ -88,9 +88,9 @@ const getThemeColor = (theme: string) => {
 // Note: getDifficultyName is now imported from @/lib/difficulty
 
 export function GameInterface({ story }: GameInterfaceProps) {
-  const [affirmations, setAffirmations] = useState<AffirmationHistory[]>([])
-  const [yesAffirmations, setYesAffirmations] = useState<PlayerAffirmation[]>([])
-  const [currentAffirmation, setCurrentAffirmation] = useState('')
+  const [questions, setQuestions] = useState<QuestionHistory[]>([])
+  const [yesQuestions, setYesQuestions] = useState<PlayerQuestion[]>([])
+  const [currentQuestion, setCurrentQuestion] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [gameStartTime, setGameStartTime] = useState(new Date())
   const [gameCompleted, setGameCompleted] = useState(false)
@@ -163,8 +163,8 @@ export function GameInterface({ story }: GameInterfaceProps) {
   const progress = Math.min(100, Math.round((discoveredPhrases.length / totalPhrases) * 100))
   
   // Calculate word count for validation
-  const wordCount = currentAffirmation.trim().split(/\s+/).filter(word => word.length > 0).length
-  const isValidStatement = currentAffirmation.trim() && !isSubmitting && currentAffirmation.length <= 50 && wordCount >= 3 && coins >= 1
+  const wordCount = currentQuestion.trim().split(/\s+/).filter(word => word.length > 0).length
+  const isValidQuestion = currentQuestion.trim() && !isSubmitting && currentQuestion.length <= 50 && wordCount >= 3 && coins >= 1
 
   // Auto-scroll to top when new messages are added (since newest is now at top)
   useEffect(() => {
@@ -174,7 +174,7 @@ export function GameInterface({ story }: GameInterfaceProps) {
         chatContainer.scrollTop = 0
       }
     }
-  }, [affirmations])
+  }, [questions])
 
   // Initialize game session - create a new session on every page load
   useEffect(() => {
@@ -307,51 +307,51 @@ export function GameInterface({ story }: GameInterfaceProps) {
     fetchRevealedPhrases()
   }, [sessionId, story.id, ])
 
-  const submitAffirmation = async () => {
-    if (!currentAffirmation.trim() || isSubmitting) return
+  const submitQuestion = async () => {
+    if (!currentQuestion.trim() || isSubmitting) return
 
     // Check character limit before sending
-    if (currentAffirmation.length > 50) {
-      const errorAffirmation: AffirmationHistory = {
-        affirmation: currentAffirmation,
+    if (currentQuestion.length > 50) {
+      const errorQuestion: QuestionHistory = {
+        question: currentQuestion,
         answer: 'Irrelevant',
         timestamp: new Date(),
-        explanation: `Statement too long! Please keep it under 50 characters. (Current: ${currentAffirmation.length})`,
+        explanation: `Question too long! Please keep it under 50 characters. (Current: ${currentQuestion.length})`,
       }
-      setAffirmations(prev => [...prev, errorAffirmation])
-      setCurrentAffirmation('')
+      setQuestions(prev => [...prev, errorQuestion])
+      setCurrentQuestion('')
       return
     }
 
     // Check minimum word count before sending
     if (wordCount < 3) {
-      const errorAffirmation: AffirmationHistory = {
-        affirmation: currentAffirmation,
+      const errorQuestion: QuestionHistory = {
+        question: currentQuestion,
         answer: 'Irrelevant',
         timestamp: new Date(),
-        explanation: `Please use at least 3 words in your statement. (Current: ${wordCount} word${wordCount !== 1 ? 's' : ''})`,
+        explanation: `Please use at least 3 words in your question. (Current: ${wordCount} word${wordCount !== 1 ? 's' : ''})`,
       }
-      setAffirmations(prev => [...prev, errorAffirmation])
-      setCurrentAffirmation('')
+      setQuestions(prev => [...prev, errorQuestion])
+      setCurrentQuestion('')
       return
     }
 
-    // Check if player has enough coins to make a statement
+    // Check if player has enough coins to ask a question
     if (coins < 1) {
-      const errorAffirmation: AffirmationHistory = {
-        affirmation: currentAffirmation,
+      const errorQuestion: QuestionHistory = {
+        question: currentQuestion,
         answer: 'Irrelevant',
         timestamp: new Date(),
-        explanation: 'You need at least 1 coin to make a statement. Reveal phrases to earn more coins!',
+        explanation: 'You need at least 1 coin to ask a question. Reveal phrases to earn more coins!',
       }
-      setAffirmations(prev => [...prev, errorAffirmation])
-      setCurrentAffirmation('')
+      setQuestions(prev => [...prev, errorQuestion])
+      setCurrentQuestion('')
       return
     }
 
     setIsSubmitting(true)
-    const affirmationText = currentAffirmation.trim()
-    setCurrentAffirmation('')
+    const questionText = currentQuestion.trim()
+    setCurrentQuestion('')
 
     try {
       const response = await fetch('/api/ask-question', {
@@ -360,7 +360,7 @@ export function GameInterface({ story }: GameInterfaceProps) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          affirmation: affirmationText,
+          question: questionText,
           storyId: story.id,
           sessionId,
         }),
@@ -369,33 +369,33 @@ export function GameInterface({ story }: GameInterfaceProps) {
       const result = await response.json()
 
       if (result.success) {
-        const data: AffirmationResponse = result.data
+        const data: QuestionResponse = result.data
 
-        // Deduct 1 coin for making a statement
+        // Deduct 1 coin for asking a question
         setCoins(prev => prev - 1)
         triggerCoinAnimation(-1)
 
-        // Add affirmation to history
-        const newAffirmation: AffirmationHistory = {
-          affirmation: affirmationText,
+        // Add question to history
+        const newQuestion: QuestionHistory = {
+          question: questionText,
           answer: data.answer,
           timestamp: new Date(),
           explanation: data.explanation,
           phraseId: data.phraseDiscovered?.id,
         }
 
-        setAffirmations(prev => [...prev, newAffirmation])
+        setQuestions(prev => [...prev, newQuestion])
 
-        // Save "Yes" affirmations for the clues panel
+        // Save "Yes" questions for the clues panel
         if (data.answer === 'Yes') {
-          const newYesAffirmation: PlayerAffirmation = {
-            affirmation: affirmationText,
+          const newYesQuestion: PlayerQuestion = {
+            question: questionText,
             answer: data.answer,
             timestamp: new Date(),
             explanation: data.explanation,
             phraseId: data.phraseDiscovered?.id,
           }
-          setYesAffirmations(prev => [...prev, newYesAffirmation])
+          setYesQuestions(prev => [...prev, newYesQuestion])
         }
 
         // Handle phrase discovery
@@ -424,24 +424,24 @@ export function GameInterface({ story }: GameInterfaceProps) {
 
       } else {
         // Handle error
-        const errorAffirmation: AffirmationHistory = {
-          affirmation: affirmationText,
+        const errorQuestion: QuestionHistory = {
+          question: questionText,
           answer: 'Irrelevant',
           timestamp: new Date(),
           explanation: result.error || 'Something went wrong. Please try again.',
         }
-        setAffirmations(prev => [...prev, errorAffirmation])
+        setQuestions(prev => [...prev, errorQuestion])
       }
 
     } catch (error) {
-      console.error('Error submitting affirmation:', error)
-      const errorAffirmation: AffirmationHistory = {
-        affirmation: affirmationText,
+      console.error('Error submitting question:', error)
+      const errorQuestion: QuestionHistory = {
+        question: questionText,
         answer: 'Irrelevant',
         timestamp: new Date(),
         explanation: 'Network error. Please check your connection and try again.',
       }
-      setAffirmations(prev => [...prev, errorAffirmation])
+      setQuestions(prev => [...prev, errorQuestion])
     } finally {
       setIsSubmitting(false)
       // Add a small delay to ensure focus sticks after rendering updates
@@ -454,17 +454,17 @@ export function GameInterface({ story }: GameInterfaceProps) {
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
-      submitAffirmation()
+      submitQuestion()
     }
   }
 
   const resetGame = () => {
-    setAffirmations([])
-    setYesAffirmations([])
+    setQuestions([])
+    setYesQuestions([])
     setDiscoveredPhrases([])
     setRevealedPhraseTexts({}) // Clear revealed phrase texts
     setGameCompleted(false)
-    setCurrentAffirmation('')
+    setCurrentQuestion('')
     setCoins(7) // Reset to starting coins
     setHintsUnlocked([]) // Reset unlocked hints
     setShowCompletionDialog(false) // Close dialog if open
@@ -667,7 +667,7 @@ export function GameInterface({ story }: GameInterfaceProps) {
             {/* Chat Interface */}
             <div className="">
               <div className="p-4">
-                <h3 className="text-lg font-semibold text-foreground">Make Your statement</h3>
+                <h3 className="text-lg font-semibold text-foreground">Ask Your Question</h3>
               </div>
 
               {/* Input Area */}
@@ -688,10 +688,10 @@ export function GameInterface({ story }: GameInterfaceProps) {
                       <input
                         ref={inputRef}
                         type="text"
-                        value={currentAffirmation}
-                        onChange={(e) => setCurrentAffirmation(e.target.value)}
+                        value={currentQuestion}
+                        onChange={(e) => setCurrentQuestion(e.target.value)}
                         onKeyPress={handleKeyPress}
-                        placeholder="Make an affirmation about the story (at least 3 words)..."
+                        placeholder="Ask a question about the story (at least 3 words)..."
                         className="w-full px-4 pr-8 py-2 border border-border rounded-lg bg-background text-sm max-lg:text-xs text-foreground focus:ring-2 focus:ring-primary focus:border-transparent pt-3 "
                         disabled={isSubmitting}
                         maxLength={50}
@@ -699,11 +699,11 @@ export function GameInterface({ story }: GameInterfaceProps) {
                       </input>
                       <div className={cn(
                         "absolute right-3 top-3 text-xs",
-                        currentAffirmation.length >= 50 
+                        currentQuestion.length >= 50 
                           ? "text-red-400 font-medium" 
                           : "text-muted-foreground"
                       )}>
-                        {50 - currentAffirmation.length}
+                        {50 - currentQuestion.length}
                       </div>
                       <div className={cn(
                         "text-xs p-2",
@@ -715,11 +715,11 @@ export function GameInterface({ story }: GameInterfaceProps) {
                       </div>
                     </div>
                     <button
-                      onClick={submitAffirmation}
-                      disabled={!isValidStatement}
+                      onClick={submitQuestion}
+                      disabled={!isValidQuestion}
                       className={cn(
                         " h-10 w-32 rounded-lg font-medium transition-colors flex items-center justify-center text-center align-center",
-                        isValidStatement
+                        isValidQuestion
                           ? "bg-primary text-primary-foreground hover:bg-primary/90"
                           : "bg-muted text-muted-foreground cursor-not-allowed"
                       )}
@@ -733,28 +733,28 @@ export function GameInterface({ story }: GameInterfaceProps) {
               )}
 
               <div className="p-6 max-h-48 overflow-y-auto">
-                {affirmations.length === 0 ? (
+                {questions.length === 0 ? (
                   <div className="text-center py-8">
                     <MessageCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground">Make your statement</p>
+                    <p className="text-muted-foreground">Ask your question</p>
                     <p className="text-sm text-muted-foreground mt-2">
-                      Example: "The man is carrying something" or "he is carrying a bag"
+                      Example: "Is the man carrying something?" or "Is he carrying a bag?"
                     </p>
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {[...affirmations].reverse().map((aff, index) => (
-                      <div key={affirmations.length - 1 - index} className="flex space-x-3 mb-3">
+                    {[...questions].reverse().map((q, index) => (
+                      <div key={questions.length - 1 - index} className="flex space-x-3 mb-3">
                         <div className={cn(
                           "flex-1 rounded-lg p-3 flex justify-between items-center",
-                          aff.answer === 'Yes' 
+                          q.answer === 'Yes' 
                             ? "bg-green-900/20 text-green-300" 
-                            : aff.answer === 'No'
-                            ? "bg-red-900/20 text-red-300"
+                            : q.answer === 'No'
+                            ? "bg-gray-800 text-gray-400"
                             : "bg-gray-800 text-gray-400"
                         )}>
-                          <p className="text-sm">{aff.affirmation}</p>
-                          <span className="text-xs font-medium ml-3">{aff.answer}</span>
+                          <p className="text-sm">{q.question}</p>
+                          <span className="text-xs font-medium ml-3">{q.answer}</span>
                         </div>
                       </div>
                     ))}
@@ -916,7 +916,7 @@ export function GameInterface({ story }: GameInterfaceProps) {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <MessageCircle className="w-3 h-3 text-muted-foreground" />
-                    <span className="text-muted-foreground">Each Statement</span>
+                    <span className="text-muted-foreground">Each Question</span>
                   </div>
                   <span className="flex gap-1 text-red-400 font-medium">-1<Coins className="w-3 h-3 text-yellow-500" /></span>
                 </div>
@@ -966,24 +966,24 @@ export function GameInterface({ story }: GameInterfaceProps) {
               </div>
               
               <div className="p-2">
-                {yesAffirmations.length === 0 ? (
+                {yesQuestions.length === 0 ? (
                   <div className="text-center py-8">
                     <Sparkles className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
                     <p className="text-muted-foreground">No clues yet</p>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Make correct affirmations to collect clues!
+                      Ask correct questions to collect clues!
                     </p>
                   </div>
                 ) : (
                   <div className="space-y-1">
-                    {yesAffirmations.map((clue, index) => (
+                    {yesQuestions.map((clue, index) => (
                       <div 
                         key={index} 
                         className="px-2 text-green-300"
                       >
                         <div className="flex items-start space-x-2">
                           <CheckCircle className="w-4 h-4 mt-0.5 flex-shrink-0 text-green-400" />
-                          <p className="text-sm">{clue.affirmation}</p>
+                          <p className="text-sm">{clue.question}</p>
                         </div>
                       </div>
                     ))}

@@ -100,16 +100,16 @@ export default function HowToPlayPage() {
                     Every question you ask receives one of three responses from our AI system:
                   </p>
                   <div className="space-y-3">
-                    <div className="flex items-center gap-3">
-                      <CheckCircle className="h-5 w-5 text-green-500" />
-                      <span className="text-foreground font-medium">Yes</span>
-                      <span className="text-muted-foreground">- Your statement is correct</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <XCircle className="h-5 w-5 text-red-500" />
-                      <span className="text-foreground font-medium">No</span>
-                      <span className="text-muted-foreground">- Your statement is incorrect</span>
-                    </div>
+                                         <div className="flex items-center gap-3">
+                       <CheckCircle className="h-5 w-5 text-green-500" />
+                       <span className="text-foreground font-medium">Yes</span>
+                       <span className="text-muted-foreground">- Your question is correct</span>
+                     </div>
+                     <div className="flex items-center gap-3">
+                       <XCircle className="h-5 w-5 text-red-500" />
+                       <span className="text-foreground font-medium">No</span>
+                       <span className="text-muted-foreground">- Your question is incorrect</span>
+                     </div>
                     <div className="flex items-center gap-3">
                       <Minus className="h-5 w-5 text-yellow-500" />
                       <span className="text-foreground font-medium">Irrelevant</span>

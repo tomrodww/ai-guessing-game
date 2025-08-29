@@ -1,9 +1,30 @@
-import { Story, StoryPhrase, PlayerAffirmation } from '@prisma/client'
+import { Story, StoryPhrase, PlayerQuestion } from '@prisma/client'
 
 // Enhanced types with relations
 export type StoryWithDetails = Story & {
   phrases: StoryPhrase[]
-  playerAffirmations?: PlayerAffirmation[]
+  playerQuestions?: PlayerQuestion[]
+}
+
+// Game response types
+export interface QuestionResponse {
+  answer: 'Yes' | 'No' | 'Irrelevant'
+  explanation: string
+  isPartialMatch: boolean
+  phraseDiscovered?: {
+    id: string
+    order: number
+    text: string
+  }
+  questionId?: string
+}
+
+export interface QuestionHistory {
+  question: string
+  answer: 'Yes' | 'No' | 'Irrelevant'
+  timestamp: Date
+  explanation?: string
+  phraseId?: string
 }
 
 // API Response types
@@ -90,4 +111,4 @@ export interface GameInterfaceProps {
 }
 
 // Utility types
-export type { Story, StoryPhrase, PlayerAffirmation } 
+export type { Story, StoryPhrase, PlayerQuestion } 

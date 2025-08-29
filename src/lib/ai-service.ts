@@ -1,6 +1,6 @@
 import { StoryPhrase } from '@prisma/client';
-import { evaluateAffirmation as evaluateWithGemini } from './gemini';
-import { AffirmationEvaluationResult } from './ai-prompt';
+import { evaluateQuestion as evaluateWithGemini } from './gemini';
+import { QuestionEvaluationResult } from './ai-prompt';
 
 export type AIProvider = 'gemini' | '';
 
@@ -18,18 +18,18 @@ function getAIProvider(): AIProvider {
 /**
  * Simple AI provider router - routes to the selected provider
  */
-export async function evaluateAffirmation(
-  affirmation: string,
+export async function evaluateQuestion(
+  question: string,
   phrases: StoryPhrase[],
   context: string
-): Promise<AffirmationEvaluationResult> {
+): Promise<QuestionEvaluationResult> {
   const provider = getAIProvider();
   
   console.log(`🤖 Using AI Provider: ${provider.toUpperCase()}`);
   
   switch (provider) {
     case 'gemini':
-      return await evaluateWithGemini(affirmation, phrases, context);
+      return await evaluateWithGemini(question, phrases, context);
         
     default:
       console.warn(`No provider available`);

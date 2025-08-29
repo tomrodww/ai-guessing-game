@@ -30,8 +30,8 @@ export default function AboutPage() {
             About <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">WhaHappen</span>
           </h1>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            WhaHappen is an innovative AI-powered mystery-solving game that combines cutting-edge artificial intelligence 
-            with interactive storytelling to create engaging, educational experiences for players of all ages.
+            WhaHappen is a mystery old school game from early 2000 that we used to play with friends. We are bringing it back to life with AI-powered mystery-solving game that combines cutting-edge artificial intelligence 
+            with interactive storytelling to create engaging, educational experiences for players of all ages. We are going to be enabling users to create their own story and share with the community and see who is the most creative story creator.
           </p>
         </section>
 

@@ -18,7 +18,7 @@ export interface AIPromptResponse {
 /**
  * Interface for the final evaluation result
  */
-export interface AffirmationEvaluationResult {
+export interface QuestionEvaluationResult {
   answer: 'Yes' | 'No' | 'Irrelevant';
   explanation?: string;
   matchedPhraseId?: string;
@@ -31,17 +31,17 @@ export interface AffirmationEvaluationResult {
 export function processAIResponse(
   aiResponse: AIPromptResponse,
   phrases: StoryPhrase[],
-  playerStatement?: string
-): AffirmationEvaluationResult {
+  playerQuestion?: string
+): QuestionEvaluationResult {
   // Log the AI's raw response for debugging
   if (DEBUG_AI) {
     console.log('🤖 AI Raw Response:', {
-      playerStatement: playerStatement || 'N/A',
+      playerQuestion: playerQuestion || 'N/A',
       aiResponse: aiResponse,
       timestamp: new Date().toISOString()
     });
   }
-  let finalResult: AffirmationEvaluationResult;
+  let finalResult: QuestionEvaluationResult;
 
   if (aiResponse.status === 'correct') {
     if (aiResponse.shouldReveal && aiResponse.phraseId) {
@@ -86,28 +86,28 @@ export function processAIResponse(
       };
       if (DEBUG_AI) console.log('✅ PHRASE REVEALED:', matchedPhrase?.text);
     } else {
-      // The statement is true, but not enough to reveal a full phrase.
+      // The question is true, but not enough to reveal a full phrase.
       finalResult = {
         answer: 'Yes',
         explanation: 'That is true, but it doesn\'t reveal a full clue. Be more specific!',
         isPartialMatch: true, // This flag is useful for the UI
       };
-      if (DEBUG_AI) console.log('⚠️ PARTIAL MATCH: Statement correct but not specific enough');
+      if (DEBUG_AI) console.log('⚠️ PARTIAL MATCH: Question correct but not specific enough');
     }
   } else if (aiResponse.status === 'incorrect') {
     finalResult = {
       answer: 'No',
-      explanation: 'That statement is incorrect.',
+      explanation: 'That question is incorrect.',
       isPartialMatch: false,
     };
-    if (DEBUG_AI) console.log('❌ INCORRECT: Statement contradicts the story');
+          if (DEBUG_AI) console.log('❌ INCORRECT: Question contradicts the story');
   } else { // 'irrelevant'
     finalResult = {
       answer: 'Irrelevant',
-      explanation: 'That statement is irrelevant to the story.',
+      explanation: 'That question is irrelevant to the story.',
       isPartialMatch: false,
     };
-    if (DEBUG_AI) console.log('🚫 IRRELEVANT: Statement not related to story');
+          if (DEBUG_AI) console.log('🚫 IRRELEVANT: Question not related to story');
   }
 
   if (DEBUG_AI) console.log('🎮 Final Game Response:', finalResult);

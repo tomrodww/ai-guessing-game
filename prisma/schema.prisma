@@ -22,9 +22,9 @@ model Story {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  phrases            StoryPhrase[] // The phrases that make up the complete story
-  playerAffirmations PlayerAffirmation[]
-  gameSessions       GameSession[]
+  phrases         StoryPhrase[] // The phrases that make up the complete story
+  playerQuestions PlayerQuestion[]
+  gameSessions    GameSession[]
 
   @@map("stories")
 }
@@ -42,17 +42,17 @@ model StoryPhrase {
   @@map("story_phrases")
 }
 
-model PlayerAffirmation {
-  id          String   @id @default(cuid())
-  storyId     String
-  affirmation String // The affirmation/statement made by the player
-  response    String // "Yes", "No", or "Irrelevant"
-  phraseId    String? // If response is "Yes", which phrase does this relate to
-  createdAt   DateTime @default(now())
+model PlayerQuestion {
+  id        String   @id @default(cuid())
+  storyId   String
+  question  String // The question asked by the player
+  response  String // "Yes", "No", or "Irrelevant"
+  phraseId  String? // If response is "Yes", which phrase does this relate to
+  createdAt DateTime @default(now())
 
   story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
 
-  @@map("player_affirmations")
+  @@map("player_questions")
 }
 
 model GameSession {

@@ -5,41 +5,41 @@ import { AffirmationResponse } from '@/types'
 
 export async function POST(request: NextRequest) {
   try {
-    const { affirmation, storyId, sessionId } = await request.json()
+    const { question, storyId, sessionId } = await request.json()
 
-    if (!affirmation || !storyId) {
+    if (!question || !storyId) {
       return NextResponse.json(
         { success: false, error: 'Missing required fields' },
         { status: 400 }
       )
     }
 
-    // Validate affirmation length
-    if (affirmation.length > 50) {
+    // Validate question length
+    if (question.length > 50) {
       return NextResponse.json(
         { 
           success: false, 
-          error: `Statement too long! Please keep it under 50 characters. (Current: ${affirmation.length})` 
+          error: `Question too long! Please keep it under 50 characters. (Current: ${question.length})` 
         },
         { status: 400 }
       )
     }
 
-    // Validate affirmation is not empty after trimming
-    if (!affirmation.trim()) {
+    // Validate question is not empty after trimming
+    if (!question.trim()) {
       return NextResponse.json(
-        { success: false, error: 'Statement cannot be empty' },
+        { success: false, error: 'Question cannot be empty' },
         { status: 400 }
       )
     }
 
     // Validate minimum word count
-    const wordCount = affirmation.trim().split(/\s+/).filter((word: string) => word.length > 0).length
+    const wordCount = question.trim().split(/\s+/).filter((word: string) => word.length > 0).length
     if (wordCount < 3) {
       return NextResponse.json(
         { 
           success: false, 
-          error: `Please use at least 3 words in your statement. (Current: ${wordCount} word${wordCount !== 1 ? 's' : ''})` 
+          error: `Please use at least 3 words in your question. (Current: ${wordCount} word${wordCount !== 1 ? 's' : ''})` 
         },
         { status: 400 }
       )
@@ -62,8 +62,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Evaluate the affirmation using AI with phrases
-    const evaluation = await evaluateAffirmation(affirmation, story.phrases, story.context)
+    // Evaluate the question using AI with phrases
+    const evaluation = await evaluateQuestion(question, story.phrases, story.context)
 
     let response: AffirmationResponse = {
       answer: evaluation.answer,
@@ -72,17 +72,17 @@ export async function POST(request: NextRequest) {
       coinsEarned: 0 // Default to 0, will be updated if phrase discovered
     }
 
-    // Save the affirmation with its response
-    const savedAffirmation = await prisma.playerAffirmation.create({
+    // Save the question with its response
+    const savedQuestion = await prisma.playerQuestion.create({
       data: {
         storyId: story.id,
-        affirmation,
+        question,
         response: evaluation.answer,
         phraseId: evaluation.matchedPhraseId || null
       }
     })
 
-    response.affirmationId = savedAffirmation.id
+    response.questionId = savedQuestion.id
 
     // Handle phrase discovery - only reveal if it's NOT a partial match
     if (evaluation.answer === 'Yes' && evaluation.matchedPhraseId && !evaluation.isPartialMatch) {

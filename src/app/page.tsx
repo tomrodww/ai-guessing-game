@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   // Open Graph tags for social media sharing
   openGraph: {
     title: 'WhaHappen - Find the truth',
-    description: 'Dive into thrilling mysteries! Make your statement to find the truth.',
+    description: 'Dive into thrilling mysteries! Ask your questions to find the truth.',
     url: 'https://whathappen.org',
     siteName: 'WhaHappen',
     type: 'website',
@@ -41,7 +41,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         <section id="hero" className="text-center mb-12">
           <div className="max-w-4xl mx-auto">
             <h1 className="text-2xl font-bold text-foreground mb-6">
-              <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">Make your statement. Find the truth<span className='text-blue-800'>.</span></span>
+                             <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">Ask your questions. Find the truth<span className='text-blue-800'>.</span></span>
             </h1>
             <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
               Welcome to WhaHappen, an innovative AI-powered mystery-solving game that challenges your critical thinking skills. 
