@@ -455,7 +455,10 @@ export function GameInterface({ story }: GameInterfaceProps) {
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
-      submitQuestion()
+      // Only submit if the question is valid (same validation as the button)
+      if (isValidQuestion) {
+        submitQuestion()
+      }
     }
   }
 
@@ -537,7 +540,7 @@ export function GameInterface({ story }: GameInterfaceProps) {
   }
 
   return (
-    <div className="container mx-auto min-h-screen bg-background w-screen">
+    <div className="container mx-auto min-h-screen bg-background max-w-screen">
       <div className="max-w-7xl mx-auto px-4 py-4 h-full">
 
         {/* Navigation buttons */}
@@ -668,7 +671,7 @@ export function GameInterface({ story }: GameInterfaceProps) {
             {/* Chat Interface */}
             <div className="">
               <div className="p-4">
-                <h3 className="text-lg font-semibold text-foreground">Ask Your Question</h3>
+                <h3 className="text-lg font-semibold text-foreground">Ask something <span className="font-normal text-muted-foreground text-sm">(at least 3 words)</span></h3>
               </div>
 
               {/* Input Area */}
@@ -684,61 +687,29 @@ export function GameInterface({ story }: GameInterfaceProps) {
                       </div>
                     </div>
                   )}
-                  <div className="flex space-x-3">
+                  <div className="flex space-x-7 justify-between">
                     <div className="flex-1 relative">
-                      <input
-                        ref={inputRef}
-                        type="text"
-                        value={currentQuestion + '?'}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          // Remove ALL question marks that the user types - only the app adds them
-                          const cleanValue = value.replace(/\?/g, '');
-                          setCurrentQuestion(cleanValue);
-                        }}
-                        onKeyDown={(e) => {
-                          // Prevent cursor from going after the question mark
-                          const input = e.target as HTMLInputElement;
-                          const cursorPosition = input.selectionStart ?? 0;
-                          const questionMarkIndex = input.value.length; // The question mark is always at the end
-                          
-                          if (cursorPosition > questionMarkIndex - 1) {
-                            // Move cursor to just before the question mark
-                            setTimeout(() => {
-                              input.setSelectionRange(questionMarkIndex - 1, questionMarkIndex - 1);
-                            }, 0);
-                          }
-                        }}
-                        onClick={(e) => {
-                          // Ensure cursor is positioned before the question mark when clicking
-                          const input = e.target as HTMLInputElement;
-                          const questionMarkIndex = input.value.length; // The question mark is always at the end
-                          setTimeout(() => {
-                            input.setSelectionRange(questionMarkIndex - 1, questionMarkIndex - 1);
-                          }, 0);
-                        }}
-                        onPaste={(e) => {
-                          // Prevent pasting text with question marks
-                          e.preventDefault();
-                          const pastedText = e.clipboardData.getData('text').replace(/\?/g, '');
-                          const newValue = currentQuestion + pastedText;
-                          if (newValue.length <= 50) {
-                            setCurrentQuestion(newValue);
-                          }
-                        }}
-                        onKeyPress={handleKeyPress}
-                        placeholder="Ask a question about the story (at least 3 words)..."
-                        className="w-full pl-4 pr-8 pt-4 border-b-2 border-border bg-background text-lg max-lg:text-md text-foreground focus:outline-none"
-                        disabled={isSubmitting}
-                        maxLength={51}
-                      />
-                      <div className={cn(
-                        "absolute right-3 top-3 text-xs",
-                        currentQuestion.length >= 50 
-                          ? "text-red-400 font-medium" 
-                          : "text-muted-foreground"
-                      )}>
-                        {50 - currentQuestion.length}
+                      <div className="flex w-full">
+                        <input
+                          ref={inputRef}
+                          type="text"
+                          value={currentQuestion}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            setCurrentQuestion(value);
+                          }}
+                          onKeyPress={handleKeyPress}
+                          placeholder="type your question here..."
+                          className="w-fit min-w-[300px] max-w-full pl-4 pr-3 pt-2 border-b-2 border-border bg-background text-lg max-lg:text-md text-foreground focus:outline-none"
+                          style={{
+                            width: `${Math.max(300, Math.min(currentQuestion.length * 12 + 50, window.innerWidth - 400))}px`
+                          }}
+                          disabled={isSubmitting}
+                          maxLength={50}
+                        />
+                        <span className="mt-2 text-xl max-lg:text-lg text-muted-foreground pointer-events-none">
+                          ?
+                        </span>
                       </div>
                       <div className={cn(
                         "text-xs p-2",
@@ -748,12 +719,20 @@ export function GameInterface({ story }: GameInterfaceProps) {
                       )}>
                         {wordCount}/3 word{wordCount !== 1 ? 's' : ''}
                       </div>
+                      <div className={cn(
+                        "absolute -right-5 top-3 text-xs",
+                        currentQuestion.length >= 50 
+                          ? "text-red-400 font-medium" 
+                          : "text-muted-foreground"
+                      )}>
+                        {50 - currentQuestion.length}
+                      </div>
                     </div>
                     <button
                       onClick={submitQuestion}
                       disabled={!isValidQuestion}
                       className={cn(
-                        " h-10 w-32 rounded-lg font-medium transition-colors flex items-center justify-center text-center align-center",
+                        " h-10 min-w-32 rounded-lg font-medium transition-colors flex items-center justify-center text-center align-center",
                         isValidQuestion
                           ? "bg-primary text-primary-foreground hover:bg-primary/90"
                           : "bg-muted text-muted-foreground cursor-not-allowed"
@@ -767,13 +746,16 @@ export function GameInterface({ story }: GameInterfaceProps) {
                 </div>
               )}
 
-              <div className="p-6 max-h-48 overflow-y-auto">
+              <div className="p-4 max-h-48 overflow-y-auto">
                 {questions.length === 0 ? (
-                  <div className="text-center py-8">
+                  <div className="text-center py-2">
                     <MessageCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                     <p className="text-muted-foreground">Ask a question</p>
                     <p className="text-sm text-muted-foreground mt-2">
                       Example: "Is the man carrying something?" or "Is he carrying a bag?"
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Possible answers: Yes, No, Irrelevant.
                     </p>
                   </div>
                 ) : (
