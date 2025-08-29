@@ -168,7 +168,7 @@ export function GameInterface({ story }: GameInterfaceProps) {
 
   // Auto-scroll to top when new messages are added (since newest is now at top)
   useEffect(() => {
-    if (affirmations.length > 0) {
+    if (questions.length > 0) {
       const chatContainer = chatEndRef.current?.parentElement
       if (chatContainer) {
         chatContainer.scrollTop = 0
@@ -688,15 +688,49 @@ export function GameInterface({ story }: GameInterfaceProps) {
                       <input
                         ref={inputRef}
                         type="text"
-                        value={currentQuestion}
-                        onChange={(e) => setCurrentQuestion(e.target.value)}
+                        value={currentQuestion + '?'}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          // Remove ALL question marks that the user types - only the app adds them
+                          const cleanValue = value.replace(/\?/g, '');
+                          setCurrentQuestion(cleanValue);
+                        }}
+                        onKeyDown={(e) => {
+                          // Prevent cursor from going after the question mark
+                          const input = e.target as HTMLInputElement;
+                          const cursorPosition = input.selectionStart ?? 0;
+                          const questionMarkIndex = input.value.length; // The question mark is always at the end
+                          
+                          if (cursorPosition > questionMarkIndex - 1) {
+                            // Move cursor to just before the question mark
+                            setTimeout(() => {
+                              input.setSelectionRange(questionMarkIndex - 1, questionMarkIndex - 1);
+                            }, 0);
+                          }
+                        }}
+                        onClick={(e) => {
+                          // Ensure cursor is positioned before the question mark when clicking
+                          const input = e.target as HTMLInputElement;
+                          const questionMarkIndex = input.value.length; // The question mark is always at the end
+                          setTimeout(() => {
+                            input.setSelectionRange(questionMarkIndex - 1, questionMarkIndex - 1);
+                          }, 0);
+                        }}
+                        onPaste={(e) => {
+                          // Prevent pasting text with question marks
+                          e.preventDefault();
+                          const pastedText = e.clipboardData.getData('text').replace(/\?/g, '');
+                          const newValue = currentQuestion + pastedText;
+                          if (newValue.length <= 50) {
+                            setCurrentQuestion(newValue);
+                          }
+                        }}
                         onKeyPress={handleKeyPress}
                         placeholder="Ask a question about the story (at least 3 words)..."
-                        className="w-full px-4 pr-8 py-2 border border-border rounded-lg bg-background text-sm max-lg:text-xs text-foreground focus:ring-2 focus:ring-primary focus:border-transparent pt-3 "
+                        className="w-full pl-4 pr-8 pt-4 border-b-2 border-border bg-background text-lg max-lg:text-md text-foreground focus:outline-none"
                         disabled={isSubmitting}
-                        maxLength={50}
-                      >
-                      </input>
+                        maxLength={51}
+                      />
                       <div className={cn(
                         "absolute right-3 top-3 text-xs",
                         currentQuestion.length >= 50 
@@ -784,7 +818,7 @@ export function GameInterface({ story }: GameInterfaceProps) {
                   
                   <p className="text-muted-foreground mb-6 px-2 text-center">
                     You've discovered all the phrases in the story! You completed it in{' '}
-                    {formatDuration(gameStartTime, new Date())} with {affirmations.length} affirmations.
+                    {formatDuration(gameStartTime, new Date())} with {questions.length} questions.
                   </p>
 
                   <div className="flex flex-col sm:flex-row gap-3">

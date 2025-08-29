@@ -26,14 +26,14 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Get all affirmations that revealed phrases for this specific session
+    // Get all questions that revealed phrases for this specific session
     // We'll track this through the session's creation time
-    const revealedAffirmations = await prisma.playerAffirmation.findMany({
+    const revealedQuestions = await prisma.playerQuestion.findMany({
       where: {
         storyId: storyId,
         response: 'Yes',
         phraseId: { not: null },
-        createdAt: { gte: session.startedAt } // Only affirmations after session started
+        createdAt: { gte: session.startedAt } // Only questions after session started
       },
       select: {
         phraseId: true
@@ -42,8 +42,8 @@ export async function GET(request: NextRequest) {
     })
 
     // Get the actual phrase texts for revealed phrases only
-    const revealedPhraseIds = revealedAffirmations
-      .map(aff => aff.phraseId)
+    const revealedPhraseIds = revealedQuestions
+      .map(q => q.phraseId)
       .filter((id): id is string => id !== null)
 
     const revealedPhrases = await prisma.storyPhrase.findMany({

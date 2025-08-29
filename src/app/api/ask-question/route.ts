@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { evaluateAffirmation } from '@/lib/ai-service'
-import { AffirmationResponse } from '@/types'
+import { evaluateQuestion } from '@/lib/ai-service'
+import { QuestionResponse } from '@/types'
 
 export async function POST(request: NextRequest) {
   try {
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
     // Evaluate the question using AI with phrases
     const evaluation = await evaluateQuestion(question, story.phrases, story.context)
 
-    let response: AffirmationResponse = {
+    let response: QuestionResponse = {
       answer: evaluation.answer,
       explanation: evaluation.explanation,
       isPartialMatch: evaluation.isPartialMatch,
@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
           response.coinsEarned = 3
         }
 
-        // No need to mark affirmations as used since we removed that functionality
+        // No need to mark questions as used since we removed that functionality
 
         // Check if all phrases are discovered in current session (story completed)
         if (sessionId) {
@@ -144,7 +144,7 @@ export async function POST(request: NextRequest) {
           }
         } else {
           // Fallback to old behavior if no session (shouldn't happen in normal flow)
-          const discoveredPhrases = await prisma.playerAffirmation.findMany({
+          const discoveredPhrases = await prisma.playerQuestion.findMany({
             where: {
               storyId: story.id,
               response: 'Yes',
@@ -170,7 +170,7 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Error in affirmation API:', error)
+    console.error('Error in question API:', error)
     return NextResponse.json(
       { 
         success: false, 

@@ -100,14 +100,14 @@ export function processAIResponse(
       explanation: 'That question is incorrect.',
       isPartialMatch: false,
     };
-          if (DEBUG_AI) console.log('❌ INCORRECT: Question contradicts the story');
+    if (DEBUG_AI) console.log('❌ INCORRECT: Question contradicts the story');
   } else { // 'irrelevant'
     finalResult = {
       answer: 'Irrelevant',
       explanation: 'That question is irrelevant to the story.',
       isPartialMatch: false,
     };
-          if (DEBUG_AI) console.log('🚫 IRRELEVANT: Question not related to story');
+    if (DEBUG_AI) console.log('🚫 IRRELEVANT: Question not related to story');
   }
 
   if (DEBUG_AI) console.log('🎮 Final Game Response:', finalResult);

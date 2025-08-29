@@ -17,6 +17,8 @@ export interface QuestionResponse {
     text: string
   }
   questionId?: string
+  coinsEarned?: number  // Coins earned for revealing a phrase
+  storyCompleted?: boolean
 }
 
 export interface QuestionHistory {
@@ -34,20 +36,7 @@ export interface ApiResponse<T = any> {
   error?: string
 }
 
-export interface AffirmationResponse {
-  answer: 'Yes' | 'No' | 'Irrelevant'
-  explanation?: string
-  affirmationId?: string  // ID of the saved affirmation
-  phraseDiscovered?: {
-    id: string
-    order: number
-    text: string
-  }
-  storyCompleted?: boolean
-  isPartialMatch?: boolean  // Whether the answer is correct but not specific enough
-  coinsEarned?: number  // Coins earned for revealing a phrase
-  totalCoins?: number   // Current total coins
-}
+
 
 export interface SolutionResponse {
   isCorrect: boolean
@@ -65,7 +54,7 @@ export interface StoryFilters {
 // Game state types
 export interface GameState {
   storyId: string
-  affirmations: AffirmationHistory[]
+  questions: QuestionHistory[]
   discoveredPhrases: string[] // IDs of discovered phrases
   startedAt: Date
   completedAt?: Date
@@ -83,13 +72,7 @@ export interface GameSession {
   completedAt?: Date
 }
 
-export interface AffirmationHistory {
-  affirmation: string
-  answer: 'Yes' | 'No' | 'Irrelevant'
-  timestamp: Date
-  explanation?: string
-  phraseId?: string // If this affirmation relates to a specific phrase
-}
+
 
 // Component prop types
 export interface StoryCardProps {
