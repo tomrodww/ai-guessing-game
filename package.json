@@ -11,6 +11,8 @@
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
+    "db:cleanup": "tsx prisma/cleanup.ts",
+    "db:cleanup-supabase": "tsx scripts/cleanup-supabase.ts",
     "db:up": "docker-compose up -d",
     "db:down": "docker-compose down",
     "db:reset": "docker-compose down -v && docker-compose up -d",

@@ -8,6 +8,7 @@ import { StoryWithDetails, QuestionHistory, QuestionResponse } from '@/types'
 import { formatDuration, formatCountdown, cn } from '@/lib/utils'
 import { 
   ArrowLeft, 
+  AlertTriangle,
   CheckCircle, 
   Clock, 
   MessageCircle,
@@ -770,7 +771,7 @@ export function GameInterface({ story }: GameInterfaceProps) {
                 {questions.length === 0 ? (
                   <div className="text-center py-8">
                     <MessageCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground">Ask your question</p>
+                    <p className="text-muted-foreground">Ask a question</p>
                     <p className="text-sm text-muted-foreground mt-2">
                       Example: "Is the man carrying something?" or "Is he carrying a bag?"
                     </p>
@@ -995,6 +996,9 @@ export function GameInterface({ story }: GameInterfaceProps) {
                 <div className="flex items-center space-x-2">
                   <Lightbulb className="w-5 h-5 text-amber-600" />
                   <h3 className="text-md font-semibold text-foreground mt-1">Your Clues</h3>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Green = phrase revealed, Orange = partial match
+                  </p>
                 </div>
 
               </div>
@@ -1010,17 +1014,38 @@ export function GameInterface({ story }: GameInterfaceProps) {
                   </div>
                 ) : (
                   <div className="space-y-1">
-                    {yesQuestions.map((clue, index) => (
-                      <div 
-                        key={index} 
-                        className="px-2 text-green-300"
-                      >
-                        <div className="flex items-start space-x-2">
-                          <CheckCircle className="w-4 h-4 mt-0.5 flex-shrink-0 text-green-400" />
-                          <p className="text-sm">{clue.question}</p>
+                    {yesQuestions.map((clue, index) => {
+                      // Determine if this is a partial match (Yes answer but no phrase revealed)
+                      const isPartialMatch = clue.answer === 'Yes' && !clue.phraseId;
+                      
+                      return (
+                        <div 
+                          key={index} 
+                          className={cn(
+                            "px-2 py-1 rounded",
+                            isPartialMatch 
+                              ? "text-orange-300 bg-orange-900/20" 
+                              : "text-green-300 bg-green-900/20"
+                          )}
+                        >
+                          <div className="flex items-start space-x-2">
+                            {isPartialMatch ? (
+                              <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0 text-orange-400" />
+                            ) : (
+                              <CheckCircle className="w-4 h-4 mt-0.5 flex-shrink-0 text-green-400" />
+                            )}
+                            <div className="flex-1">
+                              <p className="text-sm">{clue.question}</p>
+                              {isPartialMatch && (
+                                <p className="text-xs text-orange-400/70 mt-1">
+                                  Partial match - no phrase revealed
+                                </p>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
