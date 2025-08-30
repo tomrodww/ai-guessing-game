@@ -55,7 +55,8 @@ async function cleanupSupabase() {
   } catch (error) {
     console.error('❌ Error during cleanup:', error)
     
-    if (error.message.includes('Can\'t reach database server')) {
+    // Type guard to check if error has a message property
+    if (error instanceof Error && error.message.includes('Can\'t reach database server')) {
       console.log('\n💡 Troubleshooting tips:')
       console.log('   1. Check your DATABASE_URL in .env.local')
       console.log('   2. Ensure your Supabase project is active')
