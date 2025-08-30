@@ -67,8 +67,8 @@ export async function POST(request: NextRequest) {
 
     let response: QuestionResponse = {
       answer: evaluation.answer,
-      explanation: evaluation.explanation,
-      isPartialMatch: evaluation.isPartialMatch,
+      explanation: evaluation.explanation || 'No explanation provided',
+      isPartialMatch: evaluation.isPartialMatch || false,
       coinsEarned: 0 // Default to 0, will be updated if phrase discovered
     }
 
